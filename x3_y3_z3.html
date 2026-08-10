@@ -1,0 +1,2865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discovering x³+y³+z³−3xyz — Interactive Visual Proof</title>
+<style>
+  :root{
+    --bg:#ffffff;
+    --panel-bg:#f6f7f9;
+    --panel-border:#e3e6eb;
+    --ink:#14181f;
+    --ink-soft:#5b6472;
+    --ink-faint:#9aa2af;
+    --blue:#1e5fd9;
+    --blue-soft:#eaf1ff;
+    --blue-line:#b9d0fb;
+    --red:#d3312a;
+    --red-soft:#fcebea;
+    --red-line:#f3bcb9;
+    --track:#dde1e8;
+    --radius-lg:18px;
+    --radius-md:12px;
+    --radius-sm:8px;
+    --shadow-soft:0 6px 18px rgba(20,24,31,0.07), 0 1px 3px rgba(20,24,31,0.06);
+    --font-display:-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+    --font-body:-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+    --font-mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- INPUT SCREEN ---------- */
+  #inputScreen{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 20px;
+  }
+  .lab-card{
+    width:100%;
+    max-width:560px;
+    background:var(--bg);
+    border:1px solid var(--panel-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-soft);
+    padding:36px 40px 32px;
+  }
+  .lab-eyebrow{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--blue);
+    font-weight:700;
+    margin:0 0 10px;
+  }
+  .lab-title{
+    font-family:var(--font-display);
+    font-size:26px;
+    font-weight:700;
+    line-height:1.3;
+    margin:0 0 6px;
+  }
+  .lab-identity{
+    font-family:var(--font-mono);
+    font-size:15px;
+    color:var(--ink-soft);
+    margin:0 0 26px;
+  }
+  .lab-identity sup{font-size:0.7em;}
+  .input-row{
+    display:flex;
+    gap:14px;
+    margin-bottom:8px;
+  }
+  .field{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .field label{
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink-soft);
+    font-family:var(--font-mono);
+  }
+  .field input{
+    font-family:var(--font-mono);
+    font-size:20px;
+    text-align:center;
+    padding:10px 8px;
+    border-radius:var(--radius-sm);
+    border:1.5px solid var(--panel-border);
+    background:var(--panel-bg);
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .field input:focus{
+    border-color:var(--blue);
+    background:#fff;
+  }
+  .field input.invalid{
+    border-color:var(--red);
+    background:var(--red-soft);
+  }
+  .validation-msg{
+    min-height:20px;
+    font-size:13px;
+    color:var(--red);
+    margin:10px 0 4px;
+  }
+  .examples-label{
+    font-size:12px;
+    color:var(--ink-faint);
+    margin:18px 0 8px;
+    font-family:var(--font-mono);
+    letter-spacing:.04em;
+  }
+  .examples-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:26px;
+  }
+  .example-chip{
+    font-family:var(--font-mono);
+    font-size:13px;
+    padding:6px 12px;
+    border-radius:999px;
+    border:1.5px solid var(--panel-border);
+    background:var(--panel-bg);
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .example-chip:hover{
+    border-color:var(--blue);
+    color:var(--blue);
+    background:var(--blue-soft);
+  }
+  .start-btn{
+    width:100%;
+    font-family:var(--font-display);
+    font-size:16px;
+    font-weight:700;
+    padding:14px;
+    border:none;
+    border-radius:var(--radius-md);
+    background:var(--blue);
+    color:#fff;
+    cursor:pointer;
+    transition:transform .1s ease, background .15s ease, box-shadow .15s ease;
+    box-shadow:0 4px 12px rgba(30,95,217,0.25);
+  }
+  .start-btn:hover:not(:disabled){background:#1a52bf;}
+  .start-btn:active:not(:disabled){transform:translateY(1px);}
+  .start-btn:disabled{
+    background:var(--track);
+    color:var(--ink-faint);
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+
+  /* ---------- LAB SCREEN ---------- */
+  #labScreen{
+    flex:1;
+    display:none;
+    flex-direction:column;
+    min-height:100vh;
+  }
+  #labScreen.active{display:flex;}
+  #inputScreen.hidden{display:none;}
+
+  /* Progress timeline */
+  #progressBar{
+    display:flex;
+    align-items:center;
+    gap:0;
+    padding:16px 28px;
+    border-bottom:1px solid var(--panel-border);
+    background:var(--bg);
+    overflow-x:auto;
+  }
+  .phase-node{
+    display:flex;
+    align-items:center;
+    flex-shrink:0;
+  }
+  .phase-dot-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    cursor:default;
+    padding:2px 6px;
+    border-radius:var(--radius-sm);
+    background:none;
+    border:none;
+    font-family:var(--font-mono);
+  }
+  .phase-dot-wrap.clickable{cursor:pointer;}
+  .phase-dot-wrap.clickable:hover .phase-label{color:var(--blue);}
+  .phase-dot{
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    background:var(--track);
+    border:2px solid var(--track);
+    transition:all .2s ease;
+  }
+  .phase-dot-wrap.done .phase-dot{background:var(--blue);border-color:var(--blue);}
+  .phase-dot-wrap.current .phase-dot{
+    background:#fff;
+    border-color:var(--blue);
+    box-shadow:0 0 0 4px var(--blue-soft);
+  }
+  .phase-label{
+    font-size:11px;
+    letter-spacing:.02em;
+    color:var(--ink-faint);
+    white-space:nowrap;
+    transition:color .2s ease;
+  }
+  .phase-dot-wrap.done .phase-label{color:var(--ink-soft);}
+  .phase-dot-wrap.current .phase-label{color:var(--blue);font-weight:700;}
+  .phase-connector{
+    width:34px;
+    height:2px;
+    background:var(--track);
+    margin:0 2px 18px;
+    flex-shrink:0;
+  }
+  .phase-connector.done{background:var(--blue);}
+
+  /* Main content: canvas fills the space above the nav bar */
+  #canvasArea{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    min-height:420px;
+    position:relative;
+    background:
+      radial-gradient(circle at 1px 1px, #edf0f4 1.4px, transparent 1.4px);
+    background-size:26px 26px;
+  }
+  #stateHeading{
+    text-align:center;
+    margin-bottom:22px;
+  }
+  #stateHeading .state-tag{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--blue);
+    font-weight:700;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  #stateHeading h2{
+    font-family:var(--font-display);
+    font-size:22px;
+    margin:0;
+    font-weight:700;
+  }
+  #stateStage{
+    width:100%;
+    max-width:780px;
+  }
+
+  /* State 1: signed expression cards */
+  .expr-row{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .expr-card{
+    display:flex;
+    align-items:stretch;
+    background:#fff;
+    border:1.5px solid var(--panel-border);
+    border-radius:var(--radius-md);
+    box-shadow:var(--shadow-soft);
+    overflow:hidden;
+    opacity:0;
+    transform:translateY(14px);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  .expr-card.shown{opacity:1;transform:translateY(0);}
+  .expr-gauge{
+    width:14px;
+    flex-shrink:0;
+    position:relative;
+    background:var(--track);
+  }
+  .expr-gauge .fill{
+    position:absolute;
+    left:0;right:0;
+    background:var(--blue);
+    transition:height .6s cubic-bezier(.2,.8,.2,1);
+    height:0;
+  }
+  .expr-card.negative .expr-gauge .fill{background:var(--red);}
+  .expr-body{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    padding:18px 22px;
+  }
+  .expr-formula{
+    font-family:var(--font-mono);
+    font-size:19px;
+    color:var(--ink);
+  }
+  .expr-formula sup{font-size:.68em;}
+  .expr-sub{
+    font-size:12px;
+    color:var(--ink-faint);
+    margin-top:4px;
+  }
+  .expr-values{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:var(--font-mono);
+  }
+  .expr-values .eq{
+    color:var(--ink-faint);
+    font-size:15px;
+  }
+  .expr-result{
+    font-size:24px;
+    font-weight:700;
+    min-width:46px;
+    text-align:right;
+  }
+  .expr-card.positive .expr-result{color:var(--blue);}
+  .expr-card.negative .expr-result{color:var(--red);}
+  .expr-card.zero .expr-result{color:var(--ink-soft);}
+  .expr-sign-tag{
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.06em;
+    padding:3px 9px;
+    border-radius:999px;
+    text-transform:uppercase;
+  }
+  .expr-card.positive .expr-sign-tag{background:var(--blue-soft);color:var(--blue);border:1px solid var(--blue-line);}
+  .expr-card.negative .expr-sign-tag{background:var(--red-soft);color:var(--red);border:1px solid var(--red-line);}
+  .expr-card.zero .expr-sign-tag{background:var(--panel-bg);color:var(--ink-soft);border:1px solid var(--panel-border);}
+
+  /* State 1 (redefined): positive squares as x-by-x coin grids */
+  .squares-heading{
+    text-align:center;
+    margin-bottom:24px;
+  }
+  .squares-heading .squares-sub{
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--ink-faint);
+  }
+  .squares-row{
+    display:flex;
+    gap:32px;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:flex-end;
+  }
+  .square-block{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    opacity:0;
+    transform:translateY(10px);
+    transition:opacity .4s ease, transform .4s ease;
+  }
+  .square-block.shown{opacity:1;transform:translateY(0);}
+  .square-block-header{
+    text-align:center;
+  }
+  .square-symbol{
+    font-family:var(--font-mono);
+    font-size:20px;
+    font-weight:700;
+    color:var(--ink);
+  }
+  .square-dim{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--ink-faint);
+    margin-top:2px;
+  }
+  .square-grid{
+    display:grid;
+    gap:4px;
+    padding:10px;
+    background:var(--panel-bg);
+    border:1.5px solid var(--panel-border);
+    border-radius:var(--radius-sm);
+  }
+  .square-grid .coin{
+    width:var(--coin-size);
+    height:var(--coin-size);
+  }
+  .square-value{
+    font-family:var(--font-mono);
+    font-size:15px;
+    font-weight:700;
+    color:var(--blue);
+    opacity:0;
+    transition:opacity .3s ease;
+  }
+  .square-value.shown{opacity:1;}
+  .square-value.negative-value{color:var(--red);}
+  .positive-total-wrap{
+    margin-top:32px;
+    display:flex;
+    justify-content:center;
+  }
+  .positive-total-badge{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-family:var(--font-mono);
+    font-size:16px;
+    padding:14px 24px;
+    border-radius:var(--radius-md);
+    background:#fff;
+    border:2px solid var(--blue-line);
+    box-shadow:var(--shadow-soft);
+    opacity:0;
+    transform:scale(.92);
+    transition:opacity .45s ease, transform .45s cubic-bezier(.34,1.56,.64,1);
+  }
+  .positive-total-badge.shown{opacity:1;transform:scale(1);}
+  .positive-total-badge.negative-theme{border-color:var(--red-line);}
+  .positive-total-badge .total-label{
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    font-size:12px;
+    letter-spacing:.08em;
+  }
+  .positive-total-badge .total-value{
+    font-size:26px;
+    font-weight:700;
+    color:var(--blue);
+  }
+  .positive-total-badge.negative-theme .total-value{color:var(--red);}
+
+  /* State 4: volumes as stacks of squares (layers) */
+  .volume-stack{
+    position:relative;
+  }
+  .volume-layer{
+    position:absolute;
+    opacity:0;
+    transition:opacity .35s ease, transform .35s ease;
+  }
+  .volume-layer.shown{opacity:1;}
+  .volume-layer .square-grid{
+    box-shadow:0 3px 8px rgba(20,24,31,0.16);
+  }
+  .volume-layer-top .square-grid{
+    box-shadow:0 5px 14px rgba(20,24,31,0.28);
+    border:1.5px solid #154aad;
+  }
+  .volume-slab{
+    border-radius:var(--radius-sm);
+    background:var(--panel-bg);
+    border:1.5px solid var(--panel-border);
+    box-shadow:0 3px 8px rgba(20,24,31,0.10);
+  }
+
+  /* State 3 (inserted): paired positive-square vs negative-rectangle comparisons */
+  .pairs-row{
+    display:flex;
+    flex-direction:column;
+    gap:34px;
+    align-items:center;
+  }
+  .pair-block{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+    opacity:0;
+    transform:translateY(10px);
+    transition:opacity .4s ease, transform .4s ease;
+  }
+  .pair-block.shown{opacity:1;transform:translateY(0);}
+  /* 5 columns: positive-square / minus / negative-rect / equals / result — 3 rows: tag, symbol, picture.
+     align-items:center on the grid means every row (including the picture row, whose items vary
+     in height) is vertically centered within its own row band, so the tags share one line AND
+     the picture centers line up, without one requirement breaking the other. */
+  .pair-pictures{
+    display:grid;
+    grid-template-columns:repeat(5, auto);
+    grid-template-rows:auto auto auto;
+    column-gap:18px;
+    row-gap:8px;
+    align-items:center;
+    justify-items:center;
+  }
+  /* Position slots for pair-pictures: row1=tags, row2=symbols, row3=pictures/operators.
+     Each slot also carries a mobile "order" so a single media query can turn the same
+     5-column grid into a clean vertical stack (item, minus, item, equals, item)
+     without touching the JS that builds these elements. */
+  .gi-1 { grid-column:1; grid-row:1; }
+  .gi-2 { grid-column:2; grid-row:1; }
+  .gi-3 { grid-column:3; grid-row:1; }
+  .gi-4 { grid-column:4; grid-row:1; }
+  .gi-5 { grid-column:5; grid-row:1; }
+  .gi-6 { grid-column:1; grid-row:2; }
+  .gi-7 { grid-column:2; grid-row:2; }
+  .gi-8 { grid-column:3; grid-row:2; }
+  .gi-9 { grid-column:4; grid-row:2; }
+  .gi-10{ grid-column:5; grid-row:2; }
+  .gi-11{ grid-column:1; grid-row:3; }
+  .gi-12{ grid-column:2; grid-row:3; }
+  .gi-13{ grid-column:3; grid-row:3; }
+  .gi-14{ grid-column:4; grid-row:3; }
+  .gi-15{ grid-column:5; grid-row:3; }
+  .pair-tag{
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.06em;
+    padding:3px 9px;
+    border-radius:999px;
+    text-transform:uppercase;
+  }
+  .pair-tag.positive{background:var(--blue-soft);color:var(--blue);border:1px solid var(--blue-line);}
+  .pair-tag.negative{background:var(--red-soft);color:var(--red);border:1px solid var(--red-line);}
+  .pair-tag.zero{background:var(--panel-bg);color:var(--ink-soft);border:1px solid var(--panel-border);}
+  .pair-picture-symbol{
+    font-family:var(--font-mono);
+    font-size:14px;
+    font-weight:700;
+    color:var(--ink);
+  }
+  .pair-op{
+    font-family:var(--font-mono);
+    font-size:22px;
+    color:var(--ink-faint);
+  }
+  .pair-calc{
+    font-family:var(--font-mono);
+    font-size:16px;
+    font-weight:700;
+    opacity:0;
+    transition:opacity .3s ease;
+  }
+  .pair-calc.shown{opacity:1;}
+  .pair-calc.positive{color:var(--blue);}
+  .pair-calc.negative{color:var(--red);}
+  .pair-calc.zero{color:var(--ink-soft);}
+
+  /* State 2: signed rectangular strips */
+  .strip-row{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    padding:14px 0;
+    border-bottom:1px dashed var(--panel-border);
+  }
+  .strip-row:last-child{border-bottom:none;}
+  .strip-label{
+    width:150px;
+    flex-shrink:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .strip-formula{
+    font-family:var(--font-mono);
+    font-size:16px;
+    color:var(--ink);
+  }
+  .strip-formula sup{font-size:.68em;}
+  .strip-value-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-family:var(--font-mono);
+    font-size:13px;
+    font-weight:700;
+    width:fit-content;
+  }
+  .strip-value-tag.positive{color:var(--blue);}
+  .strip-value-tag.negative{color:var(--red);}
+  .strip-value-tag.zero{color:var(--ink-soft);}
+  .strip-track{
+    flex:1;
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    min-height:44px;
+  }
+
+  /* Carrom coins — one distinct coin per unit, so each unit stays visually separate */
+  .coin-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-content:flex-start;
+    gap:5px;
+    max-width:440px;
+  }
+  .coin{
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    flex-shrink:0;
+    box-shadow:
+      0 2px 4px rgba(20,24,31,0.22),
+      inset 0 -3px 4px rgba(0,0,0,0.18),
+      inset 0 2px 3px rgba(255,255,255,0.45);
+    transform:scale(0);
+    opacity:0;
+    transition:transform .38s cubic-bezier(.34,1.56,.64,1), opacity .22s ease;
+  }
+  .coin.shown{transform:scale(1);opacity:1;}
+  .coin.positive{
+    background:radial-gradient(circle at 34% 30%, #7fadf7 0%, var(--blue) 55%, #163f8c 100%);
+    border:1.5px solid #154aad;
+  }
+  .coin.negative{
+    background:radial-gradient(circle at 34% 30%, #f28d88 0%, var(--red) 55%, #7e1f1b 100%);
+    border:1.5px solid #a52521;
+  }
+  .coin-empty{
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    border:1.5px dashed var(--ink-faint);
+    flex-shrink:0;
+  }
+  .strip-length-label{
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    color:var(--ink-faint);
+    white-space:nowrap;
+    opacity:0;
+    transition:opacity .3s ease;
+    align-self:flex-start;
+    margin-top:2px;
+  }
+  .strip-length-label.shown{opacity:1;}
+  .strip-zero-note{
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    color:var(--ink-faint);
+    font-style:italic;
+  }
+
+  /* State 3: combining coins + cancellation */
+  .combine-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+  }
+  .source-rows{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .source-chip{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:var(--font-mono);
+    font-size:13.5px;
+    padding:8px 14px;
+    border-radius:999px;
+    background:#fff;
+    border:1.5px solid var(--panel-border);
+    box-shadow:var(--shadow-soft);
+    opacity:0;
+    transform:translateY(8px);
+    transition:opacity .4s ease, transform .4s ease;
+  }
+  .source-chip.shown{opacity:1;transform:translateY(0);}
+  .source-dot{
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    flex-shrink:0;
+  }
+  .source-dot.positive{background:var(--blue);}
+  .source-dot.negative{background:var(--red);}
+  .source-dot.zero{background:var(--track);border:1.5px dashed var(--ink-faint);}
+  .merge-arrow{
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--ink-faint);
+    letter-spacing:.06em;
+    opacity:0;
+    transition:opacity .4s ease;
+  }
+  .merge-arrow.shown{opacity:1;}
+  .pool-label{
+    font-family:var(--font-mono);
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:var(--ink-faint);
+    opacity:0;
+    transition:opacity .4s ease;
+  }
+  .pool-label.shown{opacity:1;}
+  .combine-pool{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:5px;
+    max-width:560px;
+    min-height:26px;
+    padding:16px;
+    border-radius:var(--radius-md);
+    background:var(--panel-bg);
+    border:1.5px solid var(--panel-border);
+  }
+  .combine-pool .coin{
+    width:20px;
+    height:20px;
+  }
+  .combine-pool .coin.canceling{
+    transform:scale(.3) rotate(20deg) !important;
+    opacity:0 !important;
+  }
+  .combine-pool .coin.remainder-pulse{
+    animation:remainderPulse 1s ease 1;
+  }
+  @keyframes remainderPulse{
+    0%{box-shadow:0 0 0 0 rgba(30,95,217,0.35), inset 0 -3px 4px rgba(0,0,0,.18), inset 0 2px 3px rgba(255,255,255,.45);}
+    50%{box-shadow:0 0 0 7px rgba(30,95,217,0);inset 0 -3px 4px rgba(0,0,0,.18), inset 0 2px 3px rgba(255,255,255,.45);}
+    100%{box-shadow:0 2px 4px rgba(20,24,31,0.22), inset 0 -3px 4px rgba(0,0,0,.18), inset 0 2px 3px rgba(255,255,255,.45);}
+  }
+  .cancel-note{
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    color:var(--ink-faint);
+    font-style:italic;
+    min-height:18px;
+    opacity:0;
+    transition:opacity .3s ease;
+  }
+  .cancel-note.shown{opacity:1;}
+  .final-badge{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-family:var(--font-mono);
+    font-size:19px;
+    padding:16px 26px;
+    border-radius:var(--radius-md);
+    background:#fff;
+    border:2px solid var(--panel-border);
+    box-shadow:var(--shadow-soft);
+    opacity:0;
+    transform:scale(.92);
+    transition:opacity .45s ease, transform .45s cubic-bezier(.34,1.56,.64,1), border-color .3s ease;
+  }
+  .final-badge.shown{opacity:1;transform:scale(1);}
+  .final-badge .final-value{
+    font-size:24px;
+    font-weight:700;
+  }
+  .final-badge.positive{border-color:var(--blue-line);}
+  .final-badge.positive .final-value{color:var(--blue);}
+  .final-badge.negative{border-color:var(--red-line);}
+  .final-badge.negative .final-value{color:var(--red);}
+  .final-badge.zero{border-color:var(--panel-border);}
+  .final-badge.zero .final-value{color:var(--ink-soft);}
+
+  /* State 9: numerator/denominator fraction and confirmation */
+  .fraction-block{
+    display:flex;
+    align-items:center;
+    gap:22px;
+    opacity:0;
+    transform:translateY(10px);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  .fraction-block.shown{opacity:1;transform:translateY(0);}
+  .fraction{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .fraction-num, .fraction-den{
+    font-family:var(--font-mono);
+    font-size:26px;
+    font-weight:700;
+    padding:2px 10px;
+  }
+  .fraction-num{color:var(--blue);}
+  .fraction-den{color:var(--blue);}
+  .fraction-line{
+    width:100%;
+    min-width:52px;
+    border-top:3px solid var(--ink);
+    margin:2px 0;
+  }
+  .fraction-eq{
+    font-family:var(--font-mono);
+    font-size:24px;
+    color:var(--ink-faint);
+  }
+  .fraction-quotient{
+    font-family:var(--font-mono);
+    font-size:40px;
+    font-weight:700;
+    color:var(--blue);
+  }
+  .confirm-line{
+    font-family:var(--font-mono);
+    font-size:17px;
+    font-weight:700;
+    color:var(--blue);
+    text-align:center;
+    opacity:0;
+    transition:opacity .4s ease;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .confirm-line.shown{opacity:1;}
+  .confirm-check{
+    color:#1ea672;
+    font-size:20px;
+  }
+  .equation-line{
+    font-family:var(--font-mono);
+    font-size:15px;
+    font-weight:700;
+    color:var(--blue);
+    text-align:center;
+    opacity:0;
+    transition:opacity .4s ease;
+  }
+  .equation-line.shown{opacity:1;}
+  .fraction-num-text, .fraction-den-text{
+    font-family:var(--font-mono);
+    font-size:15px;
+    font-weight:700;
+    color:var(--blue);
+    padding:2px 10px;
+    white-space:nowrap;
+  }
+
+  /* State 10: final identity summary */
+  .identity-hero{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    padding:32px 40px;
+    border-radius:var(--radius-lg);
+    background:linear-gradient(180deg, #fff, var(--blue-soft));
+    border:2px solid var(--blue-line);
+    box-shadow:var(--shadow-soft);
+    opacity:0;
+    transform:scale(.94);
+    transition:opacity .5s ease, transform .5s cubic-bezier(.34,1.2,.64,1);
+    text-align:center;
+  }
+  .identity-hero.shown{opacity:1;transform:scale(1);}
+  .identity-hero .hero-eyebrow{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--blue);
+    font-weight:700;
+  }
+  .identity-hero .hero-formula{
+    font-family:var(--font-mono);
+    font-size:20px;
+    font-weight:700;
+    color:var(--ink);
+    line-height:1.5;
+  }
+  .identity-hero .hero-numeric{
+    font-family:var(--font-mono);
+    font-size:17px;
+    font-weight:700;
+    color:var(--blue);
+  }
+  .journey-recap{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:10px;
+    margin-top:26px;
+    opacity:0;
+    transition:opacity .5s ease;
+  }
+  .journey-recap.shown{opacity:1;}
+  .recap-chip{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    font-family:var(--font-mono);
+    padding:10px 16px;
+    border-radius:var(--radius-sm);
+    background:var(--panel-bg);
+    border:1.5px solid var(--panel-border);
+    min-width:90px;
+  }
+  .recap-chip .recap-label{
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-faint);
+  }
+  .recap-chip .recap-value{
+    font-size:17px;
+    font-weight:700;
+    color:var(--blue);
+  }
+  .celebrate-note{
+    font-family:var(--font-display);
+    font-size:15px;
+    color:var(--ink-soft);
+    text-align:center;
+    margin-top:22px;
+    max-width:480px;
+    opacity:0;
+    transition:opacity .5s ease;
+  }
+  .celebrate-note.shown{opacity:1;}
+
+  /* State 11: real-world / mathematical applications showcase */
+  .apps-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:22px;
+    justify-content:center;
+    max-width:760px;
+  }
+  .app-card{
+    width:225px;
+    padding:22px 18px;
+    background:#fff;
+    border:1.5px solid var(--panel-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-soft);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    text-align:center;
+    opacity:0;
+    transform:translateY(14px);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  .app-card.shown{opacity:1;transform:translateY(0);}
+  .app-card .app-icon{
+    width:76px;
+    height:76px;
+  }
+  .app-card h4{
+    font-family:var(--font-display);
+    font-size:15px;
+    margin:0;
+    color:var(--ink);
+  }
+  .app-card p{
+    font-size:12.5px;
+    line-height:1.55;
+    color:var(--ink-soft);
+    margin:0;
+  }
+  .app-card .app-formula{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    color:var(--blue);
+    font-weight:700;
+    background:var(--blue-soft);
+    padding:4px 8px;
+    border-radius:6px;
+  }
+
+
+  /* Explanation panel */
+  #explanationPanel{
+    width:100%;
+    flex-shrink:0;
+    background:var(--panel-bg);
+    border-top:1px solid var(--panel-border);
+    padding:22px 28px 30px;
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:24px;
+  }
+  .exp-block{margin-bottom:0;}
+  .exp-block h4{
+    font-family:var(--font-mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:var(--blue);
+    margin:0 0 8px;
+    font-weight:700;
+  }
+  .exp-block p{
+    margin:0;
+    font-size:14.5px;
+    line-height:1.55;
+    color:var(--ink);
+  }
+  .exp-block.try p{color:var(--ink-soft);}
+
+  /* Bottom navigation */
+  #navBar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 28px;
+    border-top:1px solid var(--panel-border);
+    background:#fff;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .nav-left,.nav-right{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .nav-btn{
+    font-family:var(--font-display);
+    font-size:14px;
+    font-weight:600;
+    padding:9px 16px;
+    border-radius:var(--radius-sm);
+    border:1.5px solid var(--panel-border);
+    background:#fff;
+    color:var(--ink);
+    cursor:pointer;
+    transition:all .15s ease;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .nav-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue);}
+  .nav-btn:disabled{
+    color:var(--ink-faint);
+    cursor:not-allowed;
+    background:var(--panel-bg);
+  }
+  .nav-btn.primary{
+    background:var(--blue);
+    border-color:var(--blue);
+    color:#fff;
+  }
+  .nav-btn.primary:hover:not(:disabled){background:#1a52bf;color:#fff;}
+  .nav-btn.primary:disabled{
+    background:var(--track);
+    border-color:var(--track);
+    color:var(--ink-faint);
+  }
+  .nav-status{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--ink-faint);
+  }
+  .lock-note{
+    font-size:11px;
+    color:var(--ink-faint);
+    font-family:var(--font-mono);
+    max-width:220px;
+    text-align:right;
+  }
+
+  @media (max-width:760px){
+    #explanationPanel{
+      grid-template-columns:1fr;
+      gap:20px;
+    }
+    #canvasArea{
+      padding:16px 10px;
+    }
+    #navBar{
+      padding:12px 14px;
+    }
+    .lock-note{ display:none; }
+
+    /* Turn the 5-column picture grid (State 3 / State 7) into a clean vertical stack:
+       item (tag, symbol, picture), operator, item, operator, item. */
+    .pair-pictures{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      row-gap:6px;
+    }
+    .gi-1 { order:1; }
+    .gi-6 { order:2; }
+    .gi-11{ order:3; margin-bottom:10px; }
+    .gi-12{ order:4; font-size:26px; margin:2px 0; }
+    .gi-3 { order:5; }
+    .gi-8 { order:6; }
+    .gi-13{ order:7; margin-bottom:10px; }
+    .gi-14{ order:8; font-size:26px; margin:2px 0; }
+    .gi-5 { order:9; }
+    .gi-10{ order:10; }
+    .gi-15{ order:11; }
+    .gi-2, .gi-4, .gi-7, .gi-9{ display:none; }
+
+    /* Long formula text: allow wrapping and shrink slightly so it never forces
+       horizontal scroll on narrow phones. */
+    .identity-hero{ padding:22px 16px; }
+    .identity-hero .hero-formula{ font-size:16px; }
+    .lab-identity{ font-size:13px; }
+    .fraction-num-text, .fraction-den-text{ white-space:normal; font-size:13px; text-align:center; }
+  }
+
+  @media (max-width:420px){
+    .expr-formula{ font-size:16px; }
+    .expr-result{ font-size:20px; }
+    .square-symbol{ font-size:17px; }
+    .identity-hero .hero-formula{ font-size:14px; }
+    .identity-hero .hero-numeric{ font-size:14px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ INPUT SCREEN ============ -->
+  <div id="inputScreen">
+    <div class="lab-card">
+      <p class="lab-eyebrow">Interactive Math Laboratory</p>
+      <h1 class="lab-title">Discover the Identity</h1>
+      <p class="lab-identity">(x³+y³+z³−3xyz) / (x²+y²+z²−xy−yz−zx) = x+y+z</p>
+
+      <div class="input-row">
+        <div class="field">
+          <label for="inputX">x</label>
+          <input type="number" id="inputX" inputmode="numeric" placeholder="5" min="1" max="10">
+        </div>
+        <div class="field">
+          <label for="inputY">y</label>
+          <input type="number" id="inputY" inputmode="numeric" placeholder="3" min="1" max="10">
+        </div>
+        <div class="field">
+          <label for="inputZ">z</label>
+          <input type="number" id="inputZ" inputmode="numeric" placeholder="2" min="1" max="10">
+        </div>
+      </div>
+      <p class="validation-msg" id="validationMsg"></p>
+
+      <p class="examples-label">TRY AN EXAMPLE</p>
+      <div class="examples-row">
+        <button class="example-chip" data-example="5,3,2">5, 3, 2</button>
+        <button class="example-chip" data-example="6,4,2">6, 4, 2</button>
+        <button class="example-chip" data-example="3,2,1">3, 2, 1</button>
+      </div>
+
+      <button class="start-btn" id="startBtn" disabled>Start Exploration</button>
+    </div>
+  </div>
+
+  <!-- ============ LAB SCREEN ============ -->
+  <div id="labScreen">
+    <div id="progressBar"></div>
+
+    <div id="canvasArea">
+      <div id="stateHeading">
+        <p class="state-tag" id="stateTag">State 1 of 15</p>
+        <h2 id="stateTitle">Three Signed Areas</h2>
+      </div>
+      <div id="stateStage"></div>
+    </div>
+
+    <div id="navBar">
+      <div class="nav-left">
+        <button class="nav-btn" id="prevBtn">◀ Previous</button>
+        <button class="nav-btn" id="replayBtn">⟳ Replay Step</button>
+      </div>
+      <div class="nav-status" id="navStatus">State 1 of 15</div>
+      <div class="nav-right">
+        <button class="nav-btn" id="resetBtn">Reset</button>
+        <button class="nav-btn primary" id="nextBtn" disabled title="Locked — states 2–15 are not built yet">Next ▶ (locked)</button>
+      </div>
+    </div>
+
+    <div id="explanationPanel">
+      <div class="exp-block">
+        <h4>What happened?</h4>
+        <p id="expWhat"></p>
+      </div>
+      <div class="exp-block">
+        <h4>Why?</h4>
+        <p id="expWhy"></p>
+      </div>
+      <div class="exp-block">
+        <h4>Observe</h4>
+        <p id="expObserve"></p>
+      </div>
+      <div class="exp-block try">
+        <h4>Try</h4>
+        <p id="expTry"></p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   MathEngine — exact integer arithmetic only
+   ========================================================= */
+const MathEngine = {
+  isValidTriple(x, y, z){
+    return Number.isInteger(x) && Number.isInteger(y) && Number.isInteger(z)
+      && x > 0 && y > 0 && z > 0
+      && x >= y && y >= z;
+  },
+  // State 3 (new, inserted): pair each positive square with its matching negative
+  // rectangle and show the subtraction — x²−yz, y²−zx, z²−xy — side by side.
+  pairedComparisons(x, y, z){
+    return [
+      { posSymbol:'x\u00B2', posDim:x, posValue:x*x,
+        negSymbol:'yz', negRows:y, negCols:z, negValue:y*z,
+        formula:'x\u00B2 \u2212 yz', result:x*x - y*z },
+      { posSymbol:'y\u00B2', posDim:y, posValue:y*y,
+        negSymbol:'zx', negRows:z, negCols:x, negValue:z*x,
+        formula:'y\u00B2 \u2212 zx', result:y*y - z*x },
+      { posSymbol:'z\u00B2', posDim:z, posValue:z*z,
+        negSymbol:'xy', negRows:x, negCols:y, negValue:x*y,
+        formula:'z\u00B2 \u2212 xy', result:z*z - x*y }
+    ];
+  },
+  positiveVolumes(x, y, z){
+    const vols = [
+      { key:'x3', symbol:'x\u00B3', dim:x, layers:x, perLayer:x*x, value:x*x*x },
+      { key:'y3', symbol:'y\u00B3', dim:y, layers:y, perLayer:y*y, value:y*y*y },
+      { key:'z3', symbol:'z\u00B3', dim:z, layers:z, perLayer:z*z, value:z*z*z }
+    ];
+    const total = vols.reduce((s, v) => s + v.value, 0);
+    return { vols, total };
+  },
+  // State 6 (new): the three negative volumes — x layers of yz, y layers of zx, z layers of xy.
+  // Each equals xyz, so together they build the -3xyz term of the numerator.
+  negativeVolumes(x, y, z){
+    const vols = [
+      { key:'xyz1', symbol:'x\u00B7yz', layers:x, rectRows:y, rectCols:z, perLayer:y*z, value:x*y*z },
+      { key:'xyz2', symbol:'y\u00B7zx', layers:y, rectRows:z, rectCols:x, perLayer:z*x, value:y*z*x },
+      { key:'xyz3', symbol:'z\u00B7xy', layers:z, rectRows:x, rectCols:y, perLayer:x*y, value:z*x*y }
+    ];
+    const total = vols.reduce((s, v) => s + v.value, 0);
+    return { vols, total };
+  },
+  // State 7 (new): stack each of State 3's signed results x layers/y layers/z layers deep —
+  // x·(x²−yz), y·(y²−zx), z·(z²−xy) — which together sum to the full numerator x³+y³+z³−3xyz.
+  layeredPairVolumes(x, y, z){
+    const pairs = this.pairedComparisons(x, y, z);
+    const letters = ['x', 'y', 'z'];
+    const layersArr = [x, y, z];
+    const vols = pairs.map((p, i) => {
+      const layers = layersArr[i];
+      const sign = p.result > 0 ? 'positive' : (p.result < 0 ? 'negative' : 'zero');
+      const resultCount = Math.abs(p.result);
+      const volume = layers * p.result;
+      return {
+        letter: letters[i],
+        formula: p.formula,
+        layers,
+        result: p.result,
+        resultCount,
+        sign,
+        volume
+      };
+    });
+    const total = vols.reduce((s, v) => s + v.volume, 0);
+    return { vols, total };
+  },
+  // State 9 (new): numerator ÷ denominator, confirmed against x+y+z
+  ratioResult(x, y, z){
+    const numerator = this.layeredPairVolumes(x, y, z).total;
+    const denominator = this.combinedFromPairResults(x, y, z).net;
+    const sumXYZ = x + y + z;
+    const quotient = denominator !== 0 ? numerator / denominator : null;
+    return { numerator, denominator, sumXYZ, quotient };
+  },
+  positiveSquares(x, y, z){
+    const squares = [
+      { key:'x2', symbol:'x\u00B2', dim:x, value:x*x },
+      { key:'y2', symbol:'y\u00B2', dim:y, value:y*y },
+      { key:'z2', symbol:'z\u00B2', dim:z, value:z*z }
+    ];
+    const total = squares.reduce((s, sq) => s + sq.value, 0);
+    return { squares, total };
+  },
+  // State 2 (new): the three negative rectangles yz, xz, xy
+  negativeRectangles(x, y, z){
+    const rects = [
+      { key:'yz', symbol:'yz', rows:y, cols:z, value:y*z },
+      { key:'xz', symbol:'xz', rows:x, cols:z, value:x*z },
+      { key:'xy', symbol:'xy', rows:x, cols:y, value:x*y }
+    ];
+    const total = rects.reduce((s, r) => s + r.value, 0);
+    return { rects, total };
+  },
+  // State 1 (old, kept for reference — not currently rendered): the three "signed area" expressions
+  signedAreas(x, y, z){
+    return [
+      { key:'xa', formula:'x\u00B2 \u2212 yz', sub:'x=' + x, value: x*x - y*z },
+      { key:'yb', formula:'y\u00B2 \u2212 xz', sub:'y=' + y, value: y*y - x*z },
+      { key:'zc', formula:'z\u00B2 \u2212 xy', sub:'z=' + z, value: z*z - x*y }
+    ];
+  },
+  // State 3: merge the three signed values into one pool, cancel +/- pairs
+  // (kept for reference — superseded by combinedFromTotals below)
+  combinedDenominator(x, y, z){
+    const rows = this.signedAreas(x, y, z);
+    const totalBlue = rows.filter(r => r.value > 0).reduce((s, r) => s + r.value, 0);
+    const totalRed = rows.filter(r => r.value < 0).reduce((s, r) => s + Math.abs(r.value), 0);
+    const cancelPairs = Math.min(totalBlue, totalRed);
+    const net = totalBlue - totalRed;
+    return { rows, totalBlue, totalRed, cancelPairs, net };
+  },
+  // State 3 (new): combine the State-1 positive total and State-2 negative total, cancel +/- pairs
+  combinedFromTotals(x, y, z){
+    const totalPositive = this.positiveSquares(x, y, z).total;
+    const totalNegative = this.negativeRectangles(x, y, z).total;
+    const cancelPairs = Math.min(totalPositive, totalNegative);
+    const net = totalPositive - totalNegative;
+    return { totalPositive, totalNegative, cancelPairs, net };
+  },
+  // State 4 (current): classify each of State 3's three RESULTS (x²−yz, y²−zx, z²−xy)
+  // as positive or negative, then add up the positive results and the negative results
+  // separately.
+  combinedFromPairResults(x, y, z){
+    const pairs = this.pairedComparisons(x, y, z);
+    const totalPositive = pairs.filter(p => p.result > 0).reduce((s, p) => s + p.result, 0);
+    const totalNegative = pairs.filter(p => p.result < 0).reduce((s, p) => s + Math.abs(p.result), 0);
+    const cancelPairs = Math.min(totalPositive, totalNegative);
+    const net = totalPositive - totalNegative;
+    return { pairs, totalPositive, totalNegative, cancelPairs, net };
+  }
+};
+
+/* =========================================================
+   State registry — only State 1 is implemented.
+   Locked = not yet built / not yet reviewed & approved.
+   ========================================================= */
+const PHASES = [
+  { id:'input',    label:'Input' },
+  { id:'areas',    label:'Areas' },
+  { id:'strips',   label:'Area Strips' },
+  { id:'pairCalc', label:'Positive & Negative' },
+  { id:'combArea', label:'Combined Area' },
+  { id:'squares',  label:'Positive Volumes' },
+  { id:'prisms',   label:'Negative Volumes' },
+  { id:'volumes',  label:'Stacked Results' },
+  { id:'volStrips',label:'Numerator Total' },
+  { id:'combVol',  label:'Combined Volume' },
+  { id:'ratio',    label:'Ratio' },
+  { id:'identity', label:'Identity' },
+  { id:'applications', label:'Applications' }
+];
+
+// Maps state number -> phase id. Only states 1-3 exist right now.
+const STATE_PHASE_MAP = { 1:'areas', 2:'strips', 3:'pairCalc', 4:'combArea', 5:'squares', 6:'prisms', 7:'volumes', 8:'volStrips', 9:'ratio', 10:'identity', 11:'applications' };
+const TOTAL_STATES = 15;
+const BUILT_STATES = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]); // states that actually exist so far
+
+// Reverse of STATE_PHASE_MAP: phase id -> the (first) state number that represents it.
+const STATE_FOR_PHASE = {};
+Object.entries(STATE_PHASE_MAP).forEach(([stateNum, phaseId]) => {
+  if(!(phaseId in STATE_FOR_PHASE)) STATE_FOR_PHASE[phaseId] = Number(stateNum);
+});
+
+/* =========================================================
+   StateManager
+   ========================================================= */
+const StateManager = {
+  current: 1,
+  xyz: null,
+  highestReached: 1,
+
+  init(x, y, z){
+    this.xyz = { x, y, z };
+    this.current = 1;
+    this.highestReached = 1;
+  },
+
+  goTo(stateNum){
+    if(!BUILT_STATES.has(stateNum)) return;
+    this.current = stateNum;
+    this.highestReached = Math.max(this.highestReached, stateNum);
+    Renderer.renderState(stateNum);
+  },
+
+  next(){
+    const n = this.current + 1;
+    if(BUILT_STATES.has(n)) this.goTo(n);
+  },
+
+  previous(){
+    const p = this.current - 1;
+    if(p < 1){
+      UIController.showInputScreen();
+      return;
+    }
+    this.goTo(p);
+  },
+
+  replay(){
+    Renderer.renderState(this.current, { replay:true });
+  }
+};
+
+/* =========================================================
+   ProgressTimeline
+   ========================================================= */
+const ProgressTimeline = {
+  mount(){
+    const bar = document.getElementById('progressBar');
+    bar.innerHTML = '';
+    const currentPhaseId = STATE_PHASE_MAP[StateManager.current] || 'input';
+    const currentIdx = PHASES.findIndex(p => p.id === currentPhaseId);
+
+    PHASES.forEach((phase, idx) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'phase-node';
+
+      const dotWrap = document.createElement('div');
+      dotWrap.className = 'phase-dot-wrap';
+      if(idx < currentIdx) dotWrap.classList.add('done');
+      if(idx === currentIdx) dotWrap.classList.add('current');
+
+      // A phase is reachable once its state has been built AND already visited
+      // (highestReached), or it's the "input" phase which is always available.
+      const phaseState = STATE_FOR_PHASE[phase.id]; // undefined for 'input'
+      const reachable = phase.id === 'input'
+        || (phaseState !== undefined && BUILT_STATES.has(phaseState) && phaseState <= StateManager.highestReached);
+      if(reachable && idx !== currentIdx){
+        dotWrap.classList.add('clickable');
+        dotWrap.addEventListener('click', () => {
+          if(phase.id === 'input') UIController.showInputScreen();
+          else StateManager.goTo(phaseState);
+        });
+      }
+
+      const dot = document.createElement('div');
+      dot.className = 'phase-dot';
+      const label = document.createElement('div');
+      label.className = 'phase-label';
+      label.textContent = phase.label;
+
+      dotWrap.appendChild(dot);
+      dotWrap.appendChild(label);
+      wrap.appendChild(dotWrap);
+
+      if(idx < PHASES.length - 1){
+        const connector = document.createElement('div');
+        connector.className = 'phase-connector' + (idx < currentIdx ? ' done' : '');
+        wrap.appendChild(connector);
+      }
+
+      bar.appendChild(wrap);
+    });
+  }
+};
+
+/* =========================================================
+   ExplanationPanel
+   ========================================================= */
+const ExplanationPanel = {
+  render(content){
+    document.getElementById('expWhat').textContent = content.what;
+    document.getElementById('expWhy').textContent = content.why;
+    document.getElementById('expObserve').textContent = content.observe;
+    document.getElementById('expTry').textContent = content.try;
+  }
+};
+
+/* =========================================================
+   StripRenderer — builds a signed "carrom coin" row.
+   One coin per unit of |value|, so every unit stays visually
+   distinct instead of blurring into a single solid bar.
+   Color = sign.
+   ========================================================= */
+const StripRenderer = {
+  // Kept for API stability; coins use a fixed size and wrap instead
+  // of scaling a single bar, so no per-value scale factor is needed.
+  computeScale(values, trackWidthPx){
+    return trackWidthPx;
+  },
+
+  buildRow(row){
+    const sign = row.value > 0 ? 'positive' : (row.value < 0 ? 'negative' : 'zero');
+    const signWord = row.value > 0 ? '+ positive' : (row.value < 0 ? '− negative' : 'zero');
+    const count = Math.abs(row.value);
+
+    const rowEl = document.createElement('div');
+    rowEl.className = 'strip-row';
+
+    let coinsHtml = '';
+    for(let i = 0; i < count; i++){
+      coinsHtml += `<div class="coin ${sign}"></div>`;
+    }
+
+    rowEl.innerHTML = `
+      <div class="strip-label">
+        <div class="strip-formula">${row.formula}</div>
+        <div class="strip-value-tag ${sign}">${signWord} · ${row.value}</div>
+      </div>
+      <div class="strip-track">
+        ${count === 0
+          ? `<div class="coin-empty"></div><div class="strip-zero-note">no coins — value is 0</div>`
+          : `<div class="coin-row">${coinsHtml}</div>
+             <div class="strip-length-label">${count} coin${count === 1 ? '' : 's'}</div>`
+        }
+      </div>
+    `;
+    return rowEl;
+  },
+
+  animateIn(rowEl, baseDelay){
+    const coins = rowEl.querySelectorAll('.coin');
+    const lenLabel = rowEl.querySelector('.strip-length-label');
+    // Cap total pour-in time regardless of coin count, so 3 coins and
+    // 90 coins both finish in a reasonable, watchable duration.
+    const totalSpan = Math.min(900, 40 + coins.length * 22);
+    const perCoin = coins.length > 1 ? totalSpan / (coins.length - 1) : 0;
+
+    coins.forEach((coin, i) => {
+      setTimeout(() => { coin.classList.add('shown'); }, baseDelay + i * perCoin);
+    });
+    setTimeout(() => { if(lenLabel) lenLabel.classList.add('shown'); }, baseDelay + totalSpan + 150);
+
+    return totalSpan;
+  }
+};
+
+const CubeRenderer = {}; // reserved for later states
+
+/* =========================================================
+   Renderer — dispatches to the correct per-state builder
+   ========================================================= */
+const Renderer = {
+  renderState(stateNum, opts = {}){
+    document.getElementById('stateTag').textContent = `State ${stateNum} of ${TOTAL_STATES}`;
+    document.getElementById('navStatus').textContent = `State ${stateNum} of ${TOTAL_STATES}`;
+
+    if(stateNum === 1){
+      this.renderState1(opts);
+    } else if(stateNum === 2){
+      this.renderState2(opts);
+    } else if(stateNum === 3){
+      this.renderState3(opts);
+    } else if(stateNum === 4){
+      this.renderState4(opts);
+    } else if(stateNum === 5){
+      this.renderState5(opts);
+    } else if(stateNum === 6){
+      this.renderState6(opts);
+    } else if(stateNum === 7){
+      this.renderState7(opts);
+    } else if(stateNum === 8){
+      this.renderState8(opts);
+    } else if(stateNum === 9){
+      this.renderState9(opts);
+    } else if(stateNum === 10){
+      this.renderState10(opts);
+    } else if(stateNum === 11){
+      this.renderState11(opts);
+    }
+
+    ProgressTimeline.mount();
+    NavController.refresh();
+  },
+
+  renderState1(opts){
+    const { x, y, z } = StateManager.xyz;
+    document.getElementById('stateTitle').textContent = 'Positive Areas';
+
+    const { squares, total } = MathEngine.positiveSquares(x, y, z);
+    const stage = document.getElementById('stateStage');
+
+    const maxDim = Math.max(x, y, z, 1);
+    const coinSize = Math.max(14, Math.min(26, Math.round(230 / maxDim)));
+
+    stage.innerHTML = `
+      <p class="squares-sub" style="text-align:center;margin-bottom:18px;">x\u00B2, y\u00B2 and z\u00B2 — each drawn as a square of carrom coins, one coin per unit</p>
+      <div class="squares-row" id="squaresRow"></div>
+      <div class="positive-total-wrap">
+        <div class="positive-total-badge" id="positiveTotalBadge">
+          <span class="total-label">Total Positive Coins</span>
+          <span class="total-value">${squares.map(s => s.value).join(' + ')} = ${total}</span>
+        </div>
+      </div>
+    `;
+
+    const squaresRow = document.getElementById('squaresRow');
+    squares.forEach(sq => {
+      const block = document.createElement('div');
+      block.className = 'square-block';
+
+      let coinsHtml = '';
+      for(let i = 0; i < sq.value; i++){
+        coinsHtml += `<div class="coin positive"></div>`;
+      }
+
+      block.innerHTML = `
+        <div class="square-block-header">
+          <div class="square-symbol">${sq.symbol}</div>
+          <div class="square-dim">${sq.dim} rows \u00D7 ${sq.dim} coins</div>
+        </div>
+        <div class="square-grid" style="--dim:${sq.dim};--coin-size:${coinSize}px;grid-template-columns:repeat(${sq.dim}, var(--coin-size));">
+          ${coinsHtml}
+        </div>
+        <div class="square-value">${sq.symbol} = ${sq.value}</div>
+      `;
+      squaresRow.appendChild(block);
+    });
+
+    ExplanationPanel.render({
+      what: `We built three squares — x², y² and z² — each as a grid of carrom coins: ${x} rows of ${x} for x², ${y} rows of ${y} for y², ${z} rows of ${z} for z². Every coin here is blue, because a square area can never be negative.`,
+      why: `x², y² and z² are the purely positive part of the identity's denominator (x²+y²+z²−xy−yz−zx). Seeing them as square grids makes it obvious why they can only ever add, never subtract.`,
+      observe: `x is the largest of the three, so its square is the biggest grid here — ${x*x} coins, versus ${y*y} for y² and ${z*z} for z².`,
+      try: `Try x=y=z (like 4,4,4) and watch all three squares become exactly the same size.`
+    });
+
+    // Animate: reveal squares one at a time, coins filling row by row within each
+    const blocks = squaresRow.querySelectorAll('.square-block');
+    blocks.forEach(b => {
+      b.classList.remove('shown');
+      b.querySelectorAll('.coin').forEach(c => c.classList.remove('shown'));
+      const val = b.querySelector('.square-value');
+      if(val) val.classList.remove('shown');
+    });
+    document.getElementById('positiveTotalBadge').classList.remove('shown');
+
+    NavController.setAnimating(true);
+    let t = opts.replay ? 0 : 100;
+
+    blocks.forEach((block, bi) => {
+      setTimeout(() => block.classList.add('shown'), t);
+      const coins = block.querySelectorAll('.coin');
+      const span = Math.min(750, 30 + coins.length * 9);
+      const perCoin = coins.length > 1 ? span / (coins.length - 1) : 0;
+      coins.forEach((coin, i) => {
+        setTimeout(() => coin.classList.add('shown'), t + 150 + i * perCoin);
+      });
+      const valEl = block.querySelector('.square-value');
+      setTimeout(() => valEl.classList.add('shown'), t + 150 + span + 150);
+      t += 150 + span + 380;
+    });
+
+    setTimeout(() => document.getElementById('positiveTotalBadge').classList.add('shown'), t);
+    t += 500;
+
+    setTimeout(() => NavController.setAnimating(false), t);
+  },
+
+  renderState2(opts){
+    const { x, y, z } = StateManager.xyz;
+    document.getElementById('stateTitle').textContent = 'Negative Areas';
+
+    const { rects, total } = MathEngine.negativeRectangles(x, y, z);
+    const stage = document.getElementById('stateStage');
+
+    const maxDim = Math.max(x, y, z, 1);
+    const coinSize = Math.max(14, Math.min(26, Math.round(230 / maxDim)));
+
+    stage.innerHTML = `
+      <p class="squares-sub" style="text-align:center;margin-bottom:18px;">yz, xz and xy — each drawn as a rectangle of carrom coins, one coin per unit</p>
+      <div class="squares-row" id="rectsRow"></div>
+      <div class="positive-total-wrap">
+        <div class="positive-total-badge negative-theme" id="negativeTotalBadge">
+          <span class="total-label">Total Negative Coins</span>
+          <span class="total-value">${rects.map(r => r.value).join(' + ')} = ${total}</span>
+        </div>
+      </div>
+    `;
+
+    const rectsRow = document.getElementById('rectsRow');
+    rects.forEach(rect => {
+      const block = document.createElement('div');
+      block.className = 'square-block';
+
+      let coinsHtml = '';
+      for(let i = 0; i < rect.value; i++){
+        coinsHtml += `<div class="coin negative"></div>`;
+      }
+
+      block.innerHTML = `
+        <div class="square-block-header">
+          <div class="square-symbol">${rect.symbol}</div>
+          <div class="square-dim">${rect.rows} rows \u00D7 ${rect.cols} coins</div>
+        </div>
+        <div class="square-grid" style="--coin-size:${coinSize}px;grid-template-columns:repeat(${rect.cols}, var(--coin-size));">
+          ${coinsHtml}
+        </div>
+        <div class="square-value negative-value">${rect.symbol} = ${rect.value}</div>
+      `;
+      rectsRow.appendChild(block);
+    });
+
+    const maxRect = rects.reduce((a, b) => b.value > a.value ? b : a, rects[0]);
+
+    ExplanationPanel.render({
+      what: `We built three rectangles — yz, xz and xy — each as a grid of carrom coins: ${y} rows of ${z} for yz, ${x} rows of ${z} for xz, ${x} rows of ${y} for xy. Every coin here is red, because these are the subtracted terms in the denominator.`,
+      why: `yz, xz and xy are the part of x²+y²+z²−xy−yz−zx that gets taken away from the positive squares. Drawing them as rectangles of red coins keeps that subtraction visible instead of hidden inside a formula.`,
+      observe: `${maxRect.symbol} is the biggest rectangle here — ${maxRect.value} coins — since it's built from the two largest of x, y, z.`,
+      try: `Try x=y=z (like 4,4,4) and watch all three rectangles become identical squares, same size as the ones from Step 1.`
+    });
+
+    // Animate: reveal rectangles one at a time, coins filling row by row within each
+    const blocks = rectsRow.querySelectorAll('.square-block');
+    blocks.forEach(b => {
+      b.classList.remove('shown');
+      b.querySelectorAll('.coin').forEach(c => c.classList.remove('shown'));
+      const val = b.querySelector('.square-value');
+      if(val) val.classList.remove('shown');
+    });
+    document.getElementById('negativeTotalBadge').classList.remove('shown');
+
+    NavController.setAnimating(true);
+    let t = opts.replay ? 0 : 100;
+
+    blocks.forEach((block, bi) => {
+      setTimeout(() => block.classList.add('shown'), t);
+      const coins = block.querySelectorAll('.coin');
+      const span = Math.min(750, 30 + coins.length * 9);
+      const perCoin = coins.length > 1 ? span / (coins.length - 1) : 0;
+      coins.forEach((coin, i) => {
+        setTimeout(() => coin.classList.add('shown'), t + 150 + i * perCoin);
+      });
+      const valEl = block.querySelector('.square-value');
+      setTimeout(() => valEl.classList.add('shown'), t + 150 + span + 150);
+      t += 150 + span + 380;
+    });
+
+    setTimeout(() => document.getElementById('negativeTotalBadge').classList.add('shown'), t);
+    t += 500;
+
+    setTimeout(() => NavController.setAnimating(false), t);
+  },
+
+  renderState3(opts){
+    const { x, y, z } = StateManager.xyz;
+    document.getElementById('stateTitle').textContent = 'Positive vs Negative, Side by Side';
+
+    const pairs = MathEngine.pairedComparisons(x, y, z);
+    const stage = document.getElementById('stateStage');
+
+    const maxDim = Math.max(x, y, z, 1);
+    const coinSize = Math.max(12, Math.min(22, Math.round(190 / maxDim)));
+
+    stage.innerHTML = `
+      <p class="squares-sub" style="text-align:center;margin-bottom:22px;">Each positive square next to its matching negative rectangle</p>
+      <div class="pairs-row" id="pairsRow"></div>
+    `;
+
+    const pairsRow = document.getElementById('pairsRow');
+
+    const coinGrid = (dimCols, count, sign) => {
+      const coinsHtml = Array(count).fill(`<div class="coin ${sign}"></div>`).join('');
+      return `<div class="square-grid" style="--coin-size:${coinSize}px;grid-template-columns:repeat(${dimCols}, var(--coin-size));">${coinsHtml}</div>`;
+    };
+
+    pairs.forEach(p => {
+      const sign = p.result > 0 ? 'positive' : (p.result < 0 ? 'negative' : 'zero');
+      const signWord = p.result > 0 ? 'Positive' : (p.result < 0 ? 'Negative' : 'Zero');
+      const resultCount = Math.abs(p.result);
+      // Arrange the result coins into a roughly square block, since |result| isn't
+      // generally a perfect square the way posValue/negValue are.
+      const resultCols = Math.max(1, Math.round(Math.sqrt(resultCount || 1)));
+
+      const block = document.createElement('div');
+      block.className = 'pair-block';
+      block.innerHTML = `
+        <div class="pair-pictures">
+          <div class="pair-tag positive gi-1">Positive</div>
+          <div class="gi-2"></div>
+          <div class="pair-tag negative gi-3">Negative</div>
+          <div class="gi-4"></div>
+          <div class="pair-tag ${sign} gi-5">${signWord}</div>
+
+          <div class="pair-picture-symbol gi-6">${p.posSymbol}</div>
+          <div class="gi-7"></div>
+          <div class="pair-picture-symbol gi-8">${p.negSymbol}</div>
+          <div class="gi-9"></div>
+          <div class="pair-picture-symbol gi-10">${resultCount}</div>
+
+          <div class="gi-11">${coinGrid(p.posDim, p.posValue, 'positive')}</div>
+          <div class="pair-op gi-12">\u2212</div>
+          <div class="gi-13">${coinGrid(p.negCols, p.negValue, 'negative')}</div>
+          <div class="pair-op gi-14">=</div>
+          <div class="gi-15">${
+            resultCount === 0
+              ? `<div class="coin-empty"></div>`
+              : coinGrid(resultCols, resultCount, sign === 'zero' ? 'positive' : sign)
+          }</div>
+        </div>
+        <div class="pair-calc ${sign}">${p.formula} = ${p.posValue} \u2212 ${p.negValue} = ${p.result}</div>
+      `;
+      pairsRow.appendChild(block);
+    });
+
+    const negCount = pairs.filter(p => p.result < 0).length;
+    ExplanationPanel.render({
+      what: `We lined up each positive square from Step 1 with the negative rectangle it's paired against: x² with yz, y² with zx, z² with xy. Underneath each pair is the actual subtraction and its result.`,
+      why: `x²+y²+z²−xy−yz−zx can also be read as three separate subtractions added together: (x²−yz)+(y²−zx)+(z²−xy). Seeing each pair side by side makes it clear which square is fighting which rectangle.`,
+      observe: negCount === 0
+        ? `With x=${x}, y=${y}, z=${z}, every pair comes out zero or positive — the square wins in all three subtractions.`
+        : `${negCount} of the three subtraction${negCount === 1 ? '' : 's'} come out negative here — that's the rectangle winning against a smaller square.`,
+      try: `Try x=8, y=6, z=1: z² is tiny but xy is large, so z²−xy will be strongly negative while the other two stay positive.`
+    });
+
+    // Animate: reveal one pair block at a time — pictures fade in together, then the calculation
+    const blocks = pairsRow.querySelectorAll('.pair-block');
+    blocks.forEach(b => {
+      b.classList.remove('shown');
+      const calc = b.querySelector('.pair-calc');
+      if(calc) calc.classList.remove('shown');
+    });
+
+    NavController.setAnimating(true);
+    let t = opts.replay ? 0 : 100;
+
+    blocks.forEach((block) => {
+      setTimeout(() => block.classList.add('shown'), t);
+
+      // Reveal the coins inside both pictures of this pair, briefly staggered.
+      const coins = block.querySelectorAll('.coin');
+      const coinSpan = Math.min(500, 20 + coins.length * 6);
+      const perCoin = coins.length > 1 ? coinSpan / (coins.length - 1) : 0;
+      coins.forEach((coin, i) => {
+        setTimeout(() => coin.classList.add('shown'), t + 100 + i * perCoin);
+      });
+
+      const calc = block.querySelector('.pair-calc');
+      setTimeout(() => calc.classList.add('shown'), t + 100 + coinSpan + 200);
+      t += 100 + coinSpan + 450;
+    });
+
+    setTimeout(() => NavController.setAnimating(false), t + 200);
+  },
+
+  renderState4(opts){
+    const { x, y, z } = StateManager.xyz;
+    document.getElementById('stateTitle').textContent = 'Combining the Coins';
+
+    const { pairs, totalPositive, totalNegative, cancelPairs, net } = MathEngine.combinedFromPairResults(x, y, z);
+    const stage = document.getElementById('stateStage');
+
+    stage.innerHTML = `
+      <div class="combine-wrap">
+        <div class="source-rows" id="pairResultRows"></div>
+        <div class="merge-arrow shown" style="margin-top:-4px;">↓ add the positive results, add the negative results ↓</div>
+        <div class="source-rows" id="sourceRows"></div>
+        <div class="merge-arrow" id="mergeArrow">↓ combine every coin into one pool ↓</div>
+        <div class="pool-label" id="poolLabel">All coins together</div>
+        <div class="combine-pool" id="combinePool"></div>
+        <div class="cancel-note" id="cancelNote"></div>
+        <div class="final-badge" id="finalBadge"></div>
+      </div>
+    `;
+
+    // --- per-pair result chips: is x²−yz, y²−zx, z²−xy positive or negative? ---
+    const pairResultRowsEl = document.getElementById('pairResultRows');
+    pairs.forEach(p => {
+      const sign = p.result > 0 ? 'positive' : (p.result < 0 ? 'negative' : 'zero');
+      const chip = document.createElement('div');
+      chip.className = 'source-chip';
+      chip.innerHTML = `<span class="source-dot ${sign}"></span><span>${p.formula} = ${p.result}</span>`;
+      pairResultRowsEl.appendChild(chip);
+    });
+
+    // --- recap chips: Total Positive Coins / Total Negative Coins ---
+    const sourceRowsEl = document.getElementById('sourceRows');
+    const totals = [
+      { sign:'positive', label:'Total Positive Coins', value: totalPositive },
+      { sign:'negative', label:'Total Negative Coins', value: totalNegative }
+    ];
+    totals.forEach(t => {
+      const chip = document.createElement('div');
+      chip.className = 'source-chip';
+      chip.innerHTML = `<span class="source-dot ${t.sign}"></span><span>${t.label} = ${t.value}</span>`;
+      sourceRowsEl.appendChild(chip);
+    });
+
+    // --- combined pool: every positive coin, then every negative coin ---
+    const poolEl = document.getElementById('combinePool');
+    const coinEls = [];
+    [['positive', totalPositive], ['negative', totalNegative]].forEach(([sign, count]) => {
+      for(let i = 0; i < count; i++){
+        const coin = document.createElement('div');
+        coin.className = `coin ${sign}`;
+        coin.dataset.sign = sign;
+        poolEl.appendChild(coin);
+        coinEls.push(coin);
+      }
+    });
+
+    const finalBadge = document.getElementById('finalBadge');
+    const netSign = net > 0 ? 'positive' : (net < 0 ? 'negative' : 'zero');
+    finalBadge.className = `final-badge ${netSign}`;
+    finalBadge.innerHTML = `<span>Final Total (x²+y²+z²−xy−yz−zx) =</span><span class="final-value">${net}</span>`;
+
+    ExplanationPanel.render({
+      what: `We looked at Step 3's three results — x²−yz, y²−zx, z²−xy — and sorted them by sign. Adding up the positive one(s) gives Total Positive Coins (${totalPositive}); adding the size of the negative one(s) gives Total Negative Coins (${totalNegative}).`,
+      why: `x²+y²+z²−xy−yz−zx is the same as adding those three signed results together. Grouping the positives and negatives first, then combining, gives the exact same answer — just with the sign-sorting made visible.`,
+      observe: cancelPairs === 0
+        ? (net === 0
+            ? `With x=${x}, y=${y}, z=${z}, there's nothing to cancel and nothing left either — the final total is exactly 0.`
+            : `With x=${x}, y=${y}, z=${z}, there are no opposite-colored pairs to cancel, so all ${Math.abs(net)} coins survive untouched.`)
+        : `${cancelPairs} blue-red pair${cancelPairs === 1 ? '' : 's'} cancel out, leaving ${Math.abs(net)} coin${Math.abs(net) === 1 ? '' : 's'} behind — always non-negative, no matter what x, y, z you choose.`,
+      try: `Try x=y=z (like 3,3,3): all three results come out 0, so Total Positive and Total Negative are both 0 too, leaving a final total of exactly 0.`
+    });
+
+    // --- animation sequence ---
+    NavController.setAnimating(true);
+    const pairChips = pairResultRowsEl.querySelectorAll('.source-chip');
+    const sourceChips = sourceRowsEl.querySelectorAll('.source-chip');
+    const mergeArrow = document.getElementById('mergeArrow');
+    const poolLabel = document.getElementById('poolLabel');
+    const cancelNote = document.getElementById('cancelNote');
+
+    pairChips.forEach(c => c.classList.remove('shown'));
+    let t = opts.replay ? 0 : 100;
+
+    // 0. reveal the three per-pair result chips first
+    pairChips.forEach((chip, i) => {
+      setTimeout(() => chip.classList.add('shown'), t + i * 180);
+    });
+    t += pairChips.length * 180 + 300;
+
+    // 1. reveal the two total chips
+    sourceChips.forEach((chip, i) => {
+      setTimeout(() => chip.classList.add('shown'), t + i * 180);
+    });
+    t += sourceChips.length * 180 + 250;
+
+    // 2. reveal arrow + pool label
+    setTimeout(() => { mergeArrow.classList.add('shown'); poolLabel.classList.add('shown'); }, t);
+    t += 350;
+
+    // 3. pour coins into the pool — slowed down so each coin is individually countable
+    const pourPerCoin = 130;
+    const pourSpan = coinEls.length > 1 ? (coinEls.length - 1) * Math.min(pourPerCoin, 4200 / (coinEls.length - 1)) : 0;
+    const perCoin = coinEls.length > 1 ? pourSpan / (coinEls.length - 1) : 0;
+    coinEls.forEach((coin, i) => {
+      setTimeout(() => coin.classList.add('shown'), t + i * perCoin);
+    });
+    t += pourSpan + 500;
+
+    // 3b. pause here so there's time to actually count the blue vs red coins
+    setTimeout(() => {
+      cancelNote.classList.add('shown');
+      cancelNote.textContent = `${totalPositive} blue, ${totalNegative} red — take a moment to count them...`;
+    }, t);
+    const countPause = 2600;
+    t += countPause;
+
+    // 4. cancel pairs, one at a time — also slowed down
+    if(cancelPairs > 0){
+      const blues = coinEls.filter(c => c.dataset.sign === 'positive');
+      const reds = coinEls.filter(c => c.dataset.sign === 'negative');
+      const perPair = 160;
+      const cancelSpan = cancelPairs > 1 ? (cancelPairs - 1) * Math.min(perPair, 3600 / (cancelPairs - 1)) : 0;
+      for(let i = 0; i < cancelPairs; i++){
+        const delay = t + (cancelPairs > 1 ? i * (cancelSpan / (cancelPairs - 1)) : 0);
+        setTimeout(() => {
+          blues[i].classList.add('canceling');
+          reds[i].classList.add('canceling');
+          cancelNote.textContent = `cancelling pair ${i + 1} of ${cancelPairs}…`;
+        }, delay);
+      }
+      t += cancelSpan + 300;
+      setTimeout(() => {
+        cancelNote.textContent = cancelPairs === 0
+          ? ''
+          : `${cancelPairs} pair${cancelPairs === 1 ? '' : 's'} cancelled.`;
+      }, t);
+      t += 150;
+    } else {
+      t += 100;
+    }
+
+    // 5. pulse remainder, reveal final badge
+    setTimeout(() => {
+      coinEls.forEach(c => { if(!c.classList.contains('canceling')) c.classList.add('remainder-pulse'); });
+    }, t);
+    t += 300;
+    setTimeout(() => finalBadge.classList.add('shown'), t);
+    t += 500;
+
+    setTimeout(() => NavController.setAnimating(false), t);
+  },
+
+  renderState5(opts){
+    const { x, y, z } = StateManager.xyz;
+    document.getElementById('stateTitle').textContent = 'Positive Volumes';
+
+    const { vols, total } = MathEngine.positiveVolumes(x, y, z);
+    const stage = document.getElementById('stateStage');
+
+    const maxDim = Math.max(x, y, z, 1);
+    // Smaller coins than State 1, since each shape now repeats its square `dim` times.
+    const coinSize = Math.max(8, Math.min(18, Math.round(150 / maxDim)));
+
+    stage.innerHTML = `
+      <p class="squares-sub" style="text-align:center;margin-bottom:18px;">x³, y³ and z³ — each built by stacking its square ${'\u00D7'} itself, layer upon layer</p>
+      <div class="squares-row" id="volsRow" style="align-items:flex-end;"></div>
+      <div class="positive-total-wrap">
+        <div class="positive-total-badge" id="positiveVolTotalBadge">
+          <span class="total-label">Total Positive Volume Coins</span>
+          <span class="total-value">${vols.map(v => v.value).join(' + ')} = ${total}</span>
+        </div>
+      </div>
+    `;
+
+    const volsRow = document.getElementById('volsRow');
+    const offsetStep = Math.max(3, Math.min(9, Math.round(50 / maxDim)));
+
+    vols.forEach(vol => {
+      const block = document.createElement('div');
+      block.className = 'square-block';
+
+      const gridW = vol.dim * coinSize + (vol.dim - 1) * 4 + 20; // + grid padding
+      const gridH = gridW;
+      const stackW = gridW + (vol.layers - 1) * offsetStep;
+      const stackH = gridH + (vol.layers - 1) * offsetStep;
+
+      let layersHtml = '';
+      for(let L = 0; L < vol.layers; L++){
+        const isTop = (L === vol.layers - 1);
+        const layerContent = isTop
+          ? `<div class="square-grid" style="--coin-size:${coinSize}px;grid-template-columns:repeat(${vol.dim}, var(--coin-size));gap:3px;padding:8px;">
+               ${Array(vol.perLayer).fill('<div class="coin positive"></div>').join('')}
+             </div>`
+          : `<div class="volume-slab" style="width:${gridW}px;height:${gridH}px;"></div>`;
+
+        layersHtml += `
+          <div class="volume-layer${isTop ? ' volume-layer-top' : ''}" data-layer="${L}" style="left:${L*offsetStep}px; top:${(vol.layers-1-L)*offsetStep}px; z-index:${L+1};">
+            ${layerContent}
+          </div>
+        `;
+      }
+
+      block.innerHTML = `
+        <div class="square-block-header">
+          <div class="square-symbol">${vol.symbol}</div>
+          <div class="square-dim">${vol.layers} layers of ${vol.dim}\u00D7${vol.dim}</div>
+        </div>
+        <div class="volume-stack" style="width:${stackW}px;height:${stackH}px;">
+          ${layersHtml}
+        </div>
+        <div class="square-value">${vol.symbol} = ${vol.value}</div>
+      `;
+      volsRow.appendChild(block);
+    });
+
+    const maxVol = vols.reduce((a, b) => b.value > a.value ? b : a, vols[0]);
+
+    ExplanationPanel.render({
+      what: `We built three volumes — x³, y³ and z³ — each as a stack of its own square: ${x} layers of the ${x}\u00D7${x} square for x³, ${y} layers of ${y}\u00D7${y} for y³, ${z} layers of ${z}\u00D7${z} for z³. The front layer of each stack shows every coin in its square pattern; the layers behind it are identical squares, so they're shown as plain slabs to keep the stack easy to read.`,
+      why: `x³+y³+z³ is the purely positive part of the identity's numerator. Stacking the squares from Step 1 layer by layer is exactly what "cubing" a number means geometrically.`,
+      observe: `${maxVol.symbol} is by far the biggest stack — ${maxVol.value} coins — since volume grows much faster than area as a number gets larger.`,
+      try: `Try x=y=z (like 4,4,4) and see all three stacks become identical cubes, each with the same number of coins.`
+    });
+
+    // Animate: reveal one volume block at a time, its layers stacking in one by one
+    const blocks = volsRow.querySelectorAll('.square-block');
+    blocks.forEach(b => {
+      b.classList.remove('shown');
+      b.querySelectorAll('.volume-layer').forEach(l => l.classList.remove('shown'));
+      b.querySelectorAll('.coin').forEach(c => c.classList.remove('shown'));
+      const val = b.querySelector('.square-value');
+      if(val) val.classList.remove('shown');
+    });
+    document.getElementById('positiveVolTotalBadge').classList.remove('shown');
+
+    NavController.setAnimating(true);
+    let t = opts.replay ? 0 : 100;
+
+    blocks.forEach((block) => {
+      setTimeout(() => block.classList.add('shown'), t);
+      const layers = block.querySelectorAll('.volume-layer');
+      const span = Math.min(600, 30 + layers.length * 55);
+      const perLayer = layers.length > 1 ? span / (layers.length - 1) : 0;
+      layers.forEach((layer, i) => {
+        setTimeout(() => {
+          layer.classList.add('shown');
+          // The layer container fades in; its coins (if any — only the top layer has them)
+          // need their own 'shown' class too, since .coin starts at opacity:0 independently.
+          layer.querySelectorAll('.coin').forEach(c => c.classList.add('shown'));
+        }, t + 150 + i * perLayer);
+      });
+      const valEl = block.querySelector('.square-value');
+      setTimeout(() => valEl.classList.add('shown'), t + 150 + span + 150);
+      t += 150 + span + 380;
+    });
+
+    setTimeout(() => document.getElementById('positiveVolTotalBadge').classList.add('shown'), t);
+    t += 500;
+
+    setTimeout(() => NavController.setAnimating(false), t);
+  },
+
+  renderState6(opts){
+    const { x, y, z } = StateManager.xyz;
+    document.getElementById('stateTitle').textContent = 'Negative Volumes';
+
+    const { vols, total } = MathEngine.negativeVolumes(x, y, z);
+    const stage = document.getElementById('stateStage');
+
+    const maxDim = Math.max(x, y, z, 1);
+    const coinSize = Math.max(8, Math.min(18, Math.round(150 / maxDim)));
+
+    stage.innerHTML = `
+      <p class="squares-sub" style="text-align:center;margin-bottom:18px;">x\u00B7yz, y\u00B7zx and z\u00B7xy — each built by stacking a rectangle, layer upon layer</p>
+      <div class="squares-row" id="negVolsRow" style="align-items:flex-end;"></div>
+      <div class="positive-total-wrap">
+        <div class="positive-total-badge negative-theme" id="negativeVolTotalBadge">
+          <span class="total-label">Total Negative Volume Coins</span>
+          <span class="total-value">${vols.map(v => v.value).join(' + ')} = ${total}</span>
+        </div>
+      </div>
+    `;
+
+    const volsRow = document.getElementById('negVolsRow');
+    const offsetStep = Math.max(3, Math.min(9, Math.round(50 / maxDim)));
+
+    vols.forEach(vol => {
+      const block = document.createElement('div');
+      block.className = 'square-block';
+
+      const gridW = vol.rectCols * coinSize + (vol.rectCols - 1) * 3 + 16; // + grid padding
+      const gridH = vol.rectRows * coinSize + (vol.rectRows - 1) * 3 + 16;
+      const stackW = gridW + (vol.layers - 1) * offsetStep;
+      const stackH = gridH + (vol.layers - 1) * offsetStep;
+
+      let layersHtml = '';
+      for(let L = 0; L < vol.layers; L++){
+        const isTop = (L === vol.layers - 1);
+        const layerContent = isTop
+          ? `<div class="square-grid" style="--coin-size:${coinSize}px;grid-template-columns:repeat(${vol.rectCols}, var(--coin-size));gap:3px;padding:8px;">
+               ${Array(vol.perLayer).fill('<div class="coin negative"></div>').join('')}
+             </div>`
+          : `<div class="volume-slab" style="width:${gridW}px;height:${gridH}px;"></div>`;
+
+        layersHtml += `
+          <div class="volume-layer${isTop ? ' volume-layer-top' : ''}" data-layer="${L}" style="left:${L*offsetStep}px; top:${(vol.layers-1-L)*offsetStep}px; z-index:${L+1};">
+            ${layerContent}
+          </div>
+        `;
+      }
+
+      block.innerHTML = `
+        <div class="square-block-header">
+          <div class="square-symbol">${vol.symbol}</div>
+          <div class="square-dim">${vol.layers} layers of ${vol.rectRows}\u00D7${vol.rectCols}</div>
+        </div>
+        <div class="volume-stack" style="width:${stackW}px;height:${stackH}px;">
+          ${layersHtml}
+        </div>
+        <div class="square-value negative-value">${vol.symbol} = ${vol.value}</div>
+      `;
+      volsRow.appendChild(block);
+    });
+
+    const maxVol = vols.reduce((a, b) => b.value > a.value ? b : a, vols[0]);
+
+    ExplanationPanel.render({
+      what: `We built three more volumes — x\u00B7yz, y\u00B7zx and z\u00B7xy — each as a stack of a rectangle: ${x} layers of the ${y}\u00D7${z} rectangle, ${y} layers of the ${z}\u00D7${x} rectangle, ${z} layers of the ${x}\u00D7${y} rectangle. Every one of them equals xyz, and every coin is red, because together they build the numerator's \u22123xyz term.`,
+      why: `The numerator x\u00B3+y\u00B3+z\u00B3\u22123xyz has a negative part made of three identical xyz boxes, just sliced and stacked three different ways. Seeing all three confirms they're really the same volume in disguise.`,
+      observe: `x\u00B7yz = y\u00B7zx = z\u00B7xy = ${maxVol.value} every time — the three stacks always end up exactly the same size, however different x, y and z are.`,
+      try: `Try any values you like — the three totals will always match, since each is just xyz written a different way.`
+    });
+
+    // Animate: reveal one volume block at a time, its layers stacking in one by one
+    const blocks = volsRow.querySelectorAll('.square-block');
+    blocks.forEach(b => {
+      b.classList.remove('shown');
+      b.querySelectorAll('.volume-layer').forEach(l => l.classList.remove('shown'));
+      b.querySelectorAll('.coin').forEach(c => c.classList.remove('shown'));
+      const val = b.querySelector('.square-value');
+      if(val) val.classList.remove('shown');
+    });
+    document.getElementById('negativeVolTotalBadge').classList.remove('shown');
+
+    NavController.setAnimating(true);
+    let t = opts.replay ? 0 : 100;
+
+    blocks.forEach((block) => {
+      setTimeout(() => block.classList.add('shown'), t);
+      const layers = block.querySelectorAll('.volume-layer');
+      const span = Math.min(600, 30 + layers.length * 55);
+      const perLayer = layers.length > 1 ? span / (layers.length - 1) : 0;
+      layers.forEach((layer, i) => {
+        setTimeout(() => {
+          layer.classList.add('shown');
+          layer.querySelectorAll('.coin').forEach(c => c.classList.add('shown'));
+        }, t + 150 + i * perLayer);
+      });
+      const valEl = block.querySelector('.square-value');
+      setTimeout(() => valEl.classList.add('shown'), t + 150 + span + 150);
+      t += 150 + span + 380;
+    });
+
+    setTimeout(() => document.getElementById('negativeVolTotalBadge').classList.add('shown'), t);
+    t += 500;
+
+    setTimeout(() => NavController.setAnimating(false), t);
+  },
+
+  renderState7(opts){
+    const { x, y, z } = StateManager.xyz;
+    document.getElementById('stateTitle').textContent = 'Stacking the Results';
+
+    const { vols } = MathEngine.layeredPairVolumes(x, y, z);
+    const { vols: posVols } = MathEngine.positiveVolumes(x, y, z);
+    const { vols: negVols } = MathEngine.negativeVolumes(x, y, z);
+    const stage = document.getElementById('stateStage');
+
+    const maxDim = Math.max(x, y, z, 1);
+    const coinSize = Math.max(6, Math.min(14, Math.round(110 / maxDim)));
+    const offsetStep = Math.max(2, Math.min(7, Math.round(36 / maxDim)));
+
+    stage.innerHTML = `
+      <p class="squares-sub" style="text-align:center;margin-bottom:18px;">x³ \u2212 xyz = x\u00B7(x²\u2212yz), and the same for y and z</p>
+      <div class="pairs-row" id="tripleVolsRow"></div>
+    `;
+
+    const volsRow = document.getElementById('tripleVolsRow');
+
+    // Builds one volume-stack (real coins only on the top layer, plain slabs behind).
+    const buildStack = (layers, cols, rows, perLayerCount, sign) => {
+      const gridW = cols * coinSize + (cols - 1) * 3 + 16;
+      const gridH = rows * coinSize + (rows - 1) * 3 + 16;
+      const stackW = gridW + (layers - 1) * offsetStep;
+      const stackH = gridH + (layers - 1) * offsetStep;
+      let layersHtml = '';
+      for(let L = 0; L < layers; L++){
+        const isTop = (L === layers - 1);
+        let layerContent;
+        if(!isTop){
+          layerContent = `<div class="volume-slab" style="width:${gridW}px;height:${gridH}px;"></div>`;
+        } else if(perLayerCount === 0){
+          layerContent = `<div class="coin-empty" style="width:${gridW}px;height:${gridH}px;border-radius:var(--radius-sm);"></div>`;
+        } else {
+          layerContent = `<div class="square-grid" style="--coin-size:${coinSize}px;grid-template-columns:repeat(${cols}, var(--coin-size));gap:3px;padding:8px;">
+               ${Array(perLayerCount).fill(`<div class="coin ${sign}"></div>`).join('')}
+             </div>`;
+        }
+        layersHtml += `
+          <div class="volume-layer${isTop ? ' volume-layer-top' : ''}" style="left:${L*offsetStep}px; top:${(layers-1-L)*offsetStep}px; z-index:${L+1};">
+            ${layerContent}
+          </div>`;
+      }
+      return `<div class="volume-stack" style="width:${stackW}px;height:${stackH}px;">${layersHtml}</div>`;
+    };
+
+    vols.forEach((v, i) => {
+      const posVol = posVols[i];   // x³, y³, z³
+      const negVol = negVols[i];   // x·yz, y·zx, z·xy
+      const sign = v.sign === 'zero' ? 'positive' : v.sign;
+
+      const posStackHtml = buildStack(posVol.layers, posVol.dim, posVol.dim, posVol.perLayer, 'positive');
+      const negStackHtml = buildStack(negVol.layers, negVol.rectCols, negVol.rectRows, negVol.perLayer, 'negative');
+
+      const resultCols = Math.max(1, Math.round(Math.sqrt(v.resultCount || 1)));
+      const resultRows = v.resultCount > 0 ? Math.ceil(v.resultCount / resultCols) : 1;
+      const resultStackHtml = buildStack(v.layers, resultCols, resultRows, v.resultCount, sign);
+
+      const block = document.createElement('div');
+      block.className = 'pair-block';
+      block.innerHTML = `
+        <div class="pair-pictures">
+          <div class="pair-tag positive gi-1">Positive</div>
+          <div class="gi-2"></div>
+          <div class="pair-tag negative gi-3">Negative</div>
+          <div class="gi-4"></div>
+          <div class="pair-tag ${sign} gi-5">${v.sign === 'positive' ? 'Positive' : (v.sign === 'negative' ? 'Negative' : 'Zero')}</div>
+
+          <div class="pair-picture-symbol gi-6">${posVol.symbol}</div>
+          <div class="gi-7"></div>
+          <div class="pair-picture-symbol gi-8">${negVol.symbol}</div>
+          <div class="gi-9"></div>
+          <div class="pair-picture-symbol gi-10">${v.letter}\u00B7(${v.formula})</div>
+
+          <div class="gi-11">${posStackHtml}</div>
+          <div class="pair-op gi-12">\u2212</div>
+          <div class="gi-13">${negStackHtml}</div>
+          <div class="pair-op gi-14">=</div>
+          <div class="gi-15">${resultStackHtml}</div>
+        </div>
+        <div class="pair-calc ${sign}">${v.letter}\u00B3 \u2212 xyz = ${posVol.value} \u2212 ${negVol.value} = ${v.volume}</div>
+      `;
+      volsRow.appendChild(block);
+    });
+
+    const negOnes = vols.filter(v => v.sign === 'negative').length;
+    ExplanationPanel.render({
+      what: `For each variable, we compared its cube (x³, y³ or z³) against xyz — the same xyz volume from Step 6, just relabeled to match which rectangle it stacks. The difference is exactly the stacked result from before: x³−xyz = x·(x²−yz), and so on.`,
+      why: `This shows why x·(x²−yz) and x³−xyz are the same thing — one is a subtraction of two volumes, the other is a single stack of a subtraction. Both give the same coins.`,
+      observe: negOnes === 0
+        ? `With x=${x}, y=${y}, z=${z}, every result here is blue — each cube is at least as large as its matching xyz box.`
+        : `${negOnes} of the three results come out red here — that's a cube smaller than xyz for that variable.`,
+      try: `Check that each row's picture on the right matches what you saw for that variable back in Step 7's stacks.`
+    });
+
+    const blocks = volsRow.querySelectorAll('.pair-block');
+    blocks.forEach(b => {
+      b.classList.remove('shown');
+      b.querySelectorAll('.volume-layer').forEach(l => l.classList.remove('shown'));
+      b.querySelectorAll('.coin').forEach(c => c.classList.remove('shown'));
+      const calc = b.querySelector('.pair-calc');
+      if(calc) calc.classList.remove('shown');
+    });
+
+    NavController.setAnimating(true);
+    let t = opts.replay ? 0 : 100;
+
+    blocks.forEach((block) => {
+      setTimeout(() => block.classList.add('shown'), t);
+      const layers = block.querySelectorAll('.volume-layer');
+      const span = Math.min(650, 20 + layers.length * 40);
+      const perLayer = layers.length > 1 ? span / (layers.length - 1) : 0;
+      layers.forEach((layer, i) => {
+        setTimeout(() => {
+          layer.classList.add('shown');
+          layer.querySelectorAll('.coin').forEach(c => c.classList.add('shown'));
+        }, t + 150 + i * perLayer);
+      });
+      const calc = block.querySelector('.pair-calc');
+      setTimeout(() => calc.classList.add('shown'), t + 150 + span + 150);
+      t += 150 + span + 380;
+    });
+
+    setTimeout(() => NavController.setAnimating(false), t + 200);
+  },
+
+  renderState8(opts){
+    const { x, y, z } = StateManager.xyz;
+    document.getElementById('stateTitle').textContent = 'The Numerator Total';
+
+    const { vols, total } = MathEngine.layeredPairVolumes(x, y, z);
+    const stage = document.getElementById('stateStage');
+
+    const maxDim = Math.max(x, y, z, 1);
+    const coinSize = Math.max(10, Math.min(24, Math.round(200 / maxDim)));
+
+    const totalSign = total > 0 ? 'positive' : (total < 0 ? 'negative' : 'zero');
+    const resultCount = Math.abs(total);
+    const resultCols = Math.max(1, Math.round(Math.sqrt(resultCount || 1)));
+
+    stage.innerHTML = `
+      <div class="combine-wrap">
+        <p class="squares-sub" style="text-align:center;">(x\u00B3\u2212xyz) + (y\u00B3\u2212xyz) + (z\u00B3\u2212xyz) = (x\u00B3+y\u00B3+z\u00B3\u22123xyz)</p>
+        <div class="source-rows" id="termRows"></div>
+        <div class="merge-arrow" id="mergeArrow">\u2193 add the three terms together \u2193</div>
+        <div class="pool-label" id="poolLabel">The result, as one layer of coins</div>
+        <div id="resultPictureWrap" style="display:flex;flex-direction:column;align-items:center;gap:12px;"></div>
+        <div class="final-badge" id="finalBadge"></div>
+      </div>
+    `;
+
+    // --- the three signed terms from State 7 ---
+    const termRowsEl = document.getElementById('termRows');
+    vols.forEach(v => {
+      const chip = document.createElement('div');
+      chip.className = 'source-chip';
+      chip.innerHTML = `<span class="source-dot ${v.sign}"></span><span>${v.letter}\u00B3\u2212xyz = ${v.volume}</span>`;
+      termRowsEl.appendChild(chip);
+    });
+
+    // --- the single result picture: one flat layer of |total| coins ---
+    const pictureWrap = document.getElementById('resultPictureWrap');
+    const pictureHtml = resultCount === 0
+      ? `<div class="coin-empty" style="width:26px;height:26px;"></div>`
+      : `<div class="square-grid" style="--coin-size:${coinSize}px;grid-template-columns:repeat(${resultCols}, var(--coin-size));">
+           ${Array(resultCount).fill(`<div class="coin ${totalSign === 'zero' ? 'positive' : totalSign}"></div>`).join('')}
+         </div>`;
+    pictureWrap.innerHTML = `${pictureHtml}<div class="square-value ${totalSign === 'negative' ? 'negative-value' : ''}">x\u00B3+y\u00B3+z\u00B3\u22123xyz = ${total}</div>`;
+
+    const finalBadge = document.getElementById('finalBadge');
+    finalBadge.className = `final-badge ${totalSign}`;
+    finalBadge.innerHTML = `<span>Numerator (x\u00B3+y\u00B3+z\u00B3\u22123xyz) =</span><span class="final-value">${total}</span>`;
+
+    ExplanationPanel.render({
+      what: `We added Step 7's three signed volumes together: (x³−xyz) + (y³−xyz) + (z³−xyz). Expanding that sum gives exactly x³+y³+z³−3xyz — the numerator of the identity — shown here as one layer of ${resultCount} ${totalSign === 'negative' ? 'red' : 'blue'} coins.`,
+      why: `Just like the denominator came together from adding signed pieces, the numerator is built the same way. This single flat layer is the final, simplified numerator value — no more cancelling or combining needed.`,
+      observe: totalSign === 'zero'
+        ? `With x=${x}, y=${y}, z=${z}, the numerator comes out to exactly 0.`
+        : `The numerator is ${totalSign === 'negative' ? 'negative' : 'positive'} here (${total}) — it won't always be positive the way the denominator always is.`,
+      try: `Compare this number to the denominator from Step 4 — dividing one by the other is coming up next.`
+    });
+
+    // --- animation sequence ---
+    NavController.setAnimating(true);
+    const termChips = termRowsEl.querySelectorAll('.source-chip');
+    const mergeArrow = document.getElementById('mergeArrow');
+    const poolLabel = document.getElementById('poolLabel');
+    const pictureCoins = pictureWrap.querySelectorAll('.coin');
+    const pictureValue = pictureWrap.querySelector('.square-value');
+
+    termChips.forEach(c => c.classList.remove('shown'));
+    mergeArrow.classList.remove('shown');
+    poolLabel.classList.remove('shown');
+    pictureCoins.forEach(c => c.classList.remove('shown'));
+    if(pictureValue) pictureValue.classList.remove('shown');
+    finalBadge.classList.remove('shown');
+
+    let t = opts.replay ? 0 : 100;
+
+    termChips.forEach((chip, i) => {
+      setTimeout(() => chip.classList.add('shown'), t + i * 200);
+    });
+    t += termChips.length * 200 + 300;
+
+    setTimeout(() => { mergeArrow.classList.add('shown'); poolLabel.classList.add('shown'); }, t);
+    t += 400;
+
+    const pourSpan = pictureCoins.length > 1 ? Math.min(2400, (pictureCoins.length - 1) * 90) : 0;
+    const perCoin = pictureCoins.length > 1 ? pourSpan / (pictureCoins.length - 1) : 0;
+    pictureCoins.forEach((coin, i) => {
+      setTimeout(() => coin.classList.add('shown'), t + i * perCoin);
+    });
+    t += pourSpan + 400;
+
+    if(pictureValue) setTimeout(() => pictureValue.classList.add('shown'), t);
+    t += 350;
+
+    setTimeout(() => finalBadge.classList.add('shown'), t);
+    t += 500;
+
+    setTimeout(() => NavController.setAnimating(false), t);
+  },
+
+  renderState9(opts){
+    const { x, y, z } = StateManager.xyz;
+    document.getElementById('stateTitle').textContent = 'The Ratio';
+
+    const { numerator, denominator, sumXYZ, quotient } = MathEngine.ratioResult(x, y, z);
+    const stage = document.getElementById('stateStage');
+
+    if(denominator === 0){
+      stage.innerHTML = `
+        <div class="combine-wrap">
+          <div class="source-rows" id="ratioChips"></div>
+          <p class="squares-sub" style="text-align:center;margin-top:18px;max-width:480px;">
+            With x=${x}, y=${y}, z=${z} (all equal), both the numerator and the denominator are 0 — the fraction 0\u20440 isn't defined. Try values where x, y and z aren't all the same to see the ratio.
+          </p>
+        </div>
+      `;
+      const chipsEl = document.getElementById('ratioChips');
+      [{sign:'zero', label:'Numerator', value:numerator}, {sign:'zero', label:'Denominator', value:denominator}].forEach(c => {
+        const chip = document.createElement('div');
+        chip.className = 'source-chip shown';
+        chip.innerHTML = `<span class="source-dot ${c.sign}"></span><span>${c.label} = ${c.value}</span>`;
+        chipsEl.appendChild(chip);
+      });
+
+      ExplanationPanel.render({
+        what: `Both the numerator and denominator came out to 0, since x, y and z are all equal.`,
+        why: `The denominator x²+y²+z²−xy−yz−zx equals ½[(x−y)²+(y−z)²+(z−x)²], which is only 0 when x=y=z — exactly when every difference is 0.`,
+        observe: `The identity still holds algebraically, but the fraction itself is undefined when x=y=z, since you can't divide by 0.`,
+        try: `Change any one of x, y, z to a different value and press Next again to see an actual ratio.`
+      });
+
+      NavController.setAnimating(false);
+      return;
+    }
+
+    const numSign = numerator > 0 ? 'positive' : (numerator < 0 ? 'negative' : 'zero');
+    const denSign = denominator > 0 ? 'positive' : (denominator < 0 ? 'negative' : 'zero');
+    const buildPicture = (count, sign) => {
+      if(count === 0) return `<div class="coin-empty" style="width:26px;height:26px;margin:0 auto;"></div>`;
+      const cols = Math.max(1, Math.round(Math.sqrt(count)));
+      const cs = Math.max(6, Math.min(20, Math.round(220 / cols)));
+      return `<div class="square-grid" style="--coin-size:${cs}px;grid-template-columns:repeat(${cols}, var(--coin-size));margin:0 auto;">${Array(count).fill(`<div class="coin ${sign === 'zero' ? 'positive' : sign}"></div>`).join('')}</div>`;
+    };
+
+    stage.innerHTML = `
+      <div class="combine-wrap">
+        <div class="equation-line" id="numEqLine">Numerator = x\u00B3+y\u00B3+z\u00B3\u22123xyz = ${numerator}</div>
+        <div id="numPicture">${buildPicture(Math.abs(numerator), numSign)}</div>
+        <div class="equation-line" id="denEqLine" style="color:var(--red);">Denominator = x\u00B2+y\u00B2+z\u00B2\u2212xy\u2212yz\u2212zx = ${denominator}</div>
+        <div id="denPicture">${buildPicture(Math.abs(denominator), denSign)}</div>
+        <div class="fraction-block" id="fractionBlock" style="flex-wrap:wrap;justify-content:center;row-gap:14px;">
+          <div class="fraction">
+            <div class="fraction-num-text">x\u00B3+y\u00B3+z\u00B3\u22123xyz</div>
+            <div class="fraction-line"></div>
+            <div class="fraction-den-text">x\u00B2+y\u00B2+z\u00B2\u2212xy\u2212yz\u2212zx</div>
+          </div>
+          <div class="fraction-eq">=</div>
+          <div class="fraction">
+            <div class="fraction-num">${numerator}</div>
+            <div class="fraction-line"></div>
+            <div class="fraction-den">${denominator}</div>
+          </div>
+          <div class="fraction-eq">=</div>
+          <div class="fraction-quotient">${quotient}</div>
+        </div>
+        <div class="confirm-line" id="confirmLine">
+          <span class="confirm-check">\u2713</span>
+          <span>x + y + z = ${x} + ${y} + ${z} = ${sumXYZ} — matches!</span>
+        </div>
+      </div>
+    `;
+
+    ExplanationPanel.render({
+      what: `We divided the numerator from Step 8 (${numerator}) by the denominator from Step 4 (${denominator}). The result is ${quotient} — and that's exactly x+y+z = ${x}+${y}+${z}.`,
+      why: `This is the whole identity in one step: (x³+y³+z³−3xyz) \u00F7 (x²+y²+z²−xy−yz−zx) = x+y+z, for any x, y, z. Every coin, square, and stack up to this point was building toward this one division.`,
+      observe: `The quotient matches x+y+z exactly — try a completely different set of values and it will still match every time.`,
+      try: `Pick new values for x, y, z and replay the whole sequence from the start to confirm the identity holds again.`
+    });
+
+    NavController.setAnimating(true);
+    const numEqLine = document.getElementById('numEqLine');
+    const denEqLine = document.getElementById('denEqLine');
+    const numPicCoins = document.querySelectorAll('#numPicture .coin');
+    const denPicCoins = document.querySelectorAll('#denPicture .coin');
+    const fractionBlock = document.getElementById('fractionBlock');
+    const confirmLine = document.getElementById('confirmLine');
+    numEqLine.classList.remove('shown');
+    denEqLine.classList.remove('shown');
+    numPicCoins.forEach(c => c.classList.remove('shown'));
+    denPicCoins.forEach(c => c.classList.remove('shown'));
+    fractionBlock.classList.remove('shown');
+    confirmLine.classList.remove('shown');
+
+    let t = opts.replay ? 0 : 100;
+    setTimeout(() => numEqLine.classList.add('shown'), t);
+    t += 300;
+    const numSpan = numPicCoins.length > 1 ? Math.min(1600, (numPicCoins.length - 1) * 25) : 0;
+    numPicCoins.forEach((c, i) => setTimeout(() => c.classList.add('shown'), t + i * (numSpan / Math.max(1, numPicCoins.length - 1))));
+    t += numSpan + 300;
+
+    setTimeout(() => denEqLine.classList.add('shown'), t);
+    t += 300;
+    const denSpan = denPicCoins.length > 1 ? Math.min(1600, (denPicCoins.length - 1) * 25) : 0;
+    denPicCoins.forEach((c, i) => setTimeout(() => c.classList.add('shown'), t + i * (denSpan / Math.max(1, denPicCoins.length - 1))));
+    t += denSpan + 400;
+
+    setTimeout(() => fractionBlock.classList.add('shown'), t);
+    t += 700;
+
+    setTimeout(() => confirmLine.classList.add('shown'), t);
+    t += 500;
+
+    setTimeout(() => NavController.setAnimating(false), t);
+  },
+
+  renderState10(opts){
+    const { x, y, z } = StateManager.xyz;
+    document.getElementById('stateTitle').textContent = 'The Identity, Confirmed';
+
+    const { numerator, denominator, sumXYZ, quotient } = MathEngine.ratioResult(x, y, z);
+    const stage = document.getElementById('stateStage');
+
+    const undefinedCase = denominator === 0;
+
+    stage.innerHTML = `
+      <div class="combine-wrap">
+        <div class="identity-hero" id="identityHero">
+          <div class="hero-eyebrow">The Identity</div>
+          <div class="hero-formula">(x\u00B3+y\u00B3+z\u00B3\u22123xyz) \u00F7 (x\u00B2+y\u00B2+z\u00B2\u2212xy\u2212yz\u2212zx) = x+y+z</div>
+          <div class="hero-numeric">${
+            undefinedCase
+              ? `With x=y=z=${x}, both sides are 0\u20440 \u2014 undefined, but the algebra still holds`
+              : `${numerator} \u00F7 ${denominator} = ${quotient} = ${x}+${y}+${z}`
+          }</div>
+        </div>
+        <div class="identity-hero" id="identityHero2" style="margin-top:26px;">
+          <div class="hero-eyebrow">The Same Identity, Rewritten</div>
+          <div class="hero-formula">x\u00B3+y\u00B3+z\u00B3\u22123xyz = (x+y+z)(x\u00B2+y\u00B2+z\u00B2\u2212xy\u2212yz\u2212zx)</div>
+          <div class="hero-numeric">${numerator} = ${sumXYZ} \u00D7 ${denominator} = ${sumXYZ * denominator}</div>
+        </div>
+      </div>
+    `;
+
+    ExplanationPanel.render({
+      what: `This is the whole identity, from start to finish, shown two ways: as a division (x³+y³+z³−3xyz) ÷ (x²+y²+z²−xy−yz−zx) = x+y+z, and as the equivalent multiplication x³+y³+z³−3xyz = (x+y+z)(x²+y²+z²−xy−yz−zx).`,
+      why: `Every earlier step was building one side of this equation out of coins you could see and count — squares, rectangles, stacks, cancellations — so this isn't just a formula, it's something you watched get built.`,
+      observe: undefinedCase
+        ? `x=y=z is the one case where the division is technically undefined (0÷0), even though the multiplication form still holds true (0 = (x+y+z)×0).`
+        : `This will hold for any positive integers x ≥ y ≥ z you choose — try a few more combinations from the input screen to convince yourself.`,
+      try: `Press Reset and pick brand-new values for x, y, z, then replay the whole sequence from State 1.`
+    });
+
+    const hero = document.getElementById('identityHero');
+    const hero2 = document.getElementById('identityHero2');
+    hero.classList.remove('shown');
+    hero2.classList.remove('shown');
+
+    NavController.setAnimating(true);
+    let t = opts.replay ? 0 : 150;
+    setTimeout(() => hero.classList.add('shown'), t);
+    t += 600;
+    setTimeout(() => hero2.classList.add('shown'), t);
+    t += 600;
+
+    setTimeout(() => NavController.setAnimating(false), t);
+  },
+
+  renderState11(opts){
+    document.getElementById('stateTitle').textContent = 'Where This Identity Shows Up';
+    const stage = document.getElementById('stateStage');
+
+    const apps = [
+      {
+        title: 'Factoring Sums of Cubes',
+        formula: 'x\u00B3+y\u00B3 = (x+y)(x\u00B2\u2212xy+y\u00B2)',
+        desc: 'Set z=0 and the whole identity collapses to the classic sum-of-cubes rule \u2014 the same factoring trick taught throughout algebra.',
+        icon: `<svg class="app-icon" viewBox="0 0 100 100">
+          <rect x="8" y="30" width="38" height="38" rx="8" fill="#1e5fd9"/>
+          <rect x="54" y="30" width="38" height="38" rx="8" fill="#eaf1ff" stroke="#1e5fd9" stroke-width="2"/>
+          <text x="50" y="56" font-family="monospace" font-size="22" fill="#5b6472" text-anchor="middle">+</text>
+        </svg>`
+      },
+      {
+        title: 'The x+y+z = 0 Shortcut',
+        formula: 'x+y+z=0 \u27F9 x\u00B3+y\u00B3+z\u00B3=3xyz',
+        desc: 'Whenever three numbers add to zero, their cubes always satisfy this shortcut \u2014 a favorite trick in competition math for instantly simplifying expressions.',
+        icon: `<svg class="app-icon" viewBox="0 0 100 100">
+          <line x1="50" y1="15" x2="85" y2="75" stroke="#1e5fd9" stroke-width="5" stroke-linecap="round"/>
+          <line x1="85" y1="75" x2="15" y2="75" stroke="#d3312a" stroke-width="5" stroke-linecap="round"/>
+          <line x1="15" y1="75" x2="50" y2="15" stroke="#14181f" stroke-width="5" stroke-linecap="round"/>
+        </svg>`
+      },
+      {
+        title: 'Circulant Matrix Determinants',
+        formula: 'det = x\u00B3+y\u00B3+z\u00B3\u22123xyz',
+        desc: 'This exact expression is the determinant of the 3\u00D73 circulant matrix built from x, y, z \u2014 linking it to signal processing and cyclic error-correcting codes.',
+        icon: `<svg class="app-icon" viewBox="0 0 100 100">
+          <rect x="11" y="11" width="26" height="26" rx="4" fill="#1e5fd9"/>
+          <rect x="41" y="11" width="26" height="26" rx="4" fill="#e3e6eb"/>
+          <rect x="71" y="11" width="26" height="26" rx="4" fill="#e3e6eb"/>
+          <rect x="11" y="41" width="26" height="26" rx="4" fill="#e3e6eb"/>
+          <rect x="41" y="41" width="26" height="26" rx="4" fill="#1e5fd9"/>
+          <rect x="71" y="41" width="26" height="26" rx="4" fill="#e3e6eb"/>
+          <rect x="11" y="71" width="26" height="26" rx="4" fill="#e3e6eb"/>
+          <rect x="41" y="71" width="26" height="26" rx="4" fill="#e3e6eb"/>
+          <rect x="71" y="71" width="26" height="26" rx="4" fill="#1e5fd9"/>
+        </svg>`
+      },
+      {
+        title: 'Proving an Inequality',
+        formula: 'x\u00B3+y\u00B3+z\u00B3 \u2265 3xyz',
+        desc: 'Because the denominator can never be negative, this identity proves x\u00B3+y\u00B3+z\u00B3 \u2265 3xyz for any positive x, y, z \u2014 a neat special case of AM\u2013GM.',
+        icon: `<svg class="app-icon" viewBox="0 0 100 100">
+          <line x1="20" y1="68" x2="80" y2="52" stroke="#14181f" stroke-width="3" stroke-linecap="round"/>
+          <polygon points="50,80 40,97 60,97" fill="#5b6472"/>
+          <circle cx="20" cy="68" r="10" fill="#eaf1ff" stroke="#1e5fd9" stroke-width="2"/>
+          <circle cx="80" cy="52" r="13" fill="#1e5fd9"/>
+        </svg>`
+      }
+    ];
+
+    stage.innerHTML = `
+      <p class="squares-sub" style="text-align:center;margin-bottom:22px;">A few places this exact identity turns up outside this app</p>
+      <div class="apps-row" id="appsRow"></div>
+    `;
+
+    const appsRow = document.getElementById('appsRow');
+    apps.forEach(app => {
+      const card = document.createElement('div');
+      card.className = 'app-card';
+      card.innerHTML = `
+        ${app.icon}
+        <h4>${app.title}</h4>
+        <p>${app.desc}</p>
+        <div class="app-formula">${app.formula}</div>
+      `;
+      appsRow.appendChild(card);
+    });
+
+    ExplanationPanel.render({
+      what: `Four places where x³+y³+z³−3xyz = (x+y+z)(x²+y²+z²−xy−yz−zx) shows up outside of this app: factoring, competition-math shortcuts, linear algebra, and inequalities.`,
+      why: `An identity this clean rarely stays confined to one topic — the same algebra underlies a factoring rule, a matrix determinant, and a classic inequality, all at once.`,
+      observe: `The circulant-matrix connection is the least obvious one: arranging x, y, z into a cyclic 3×3 matrix and taking its determinant gives you this exact expression back.`,
+      try: `Pick whichever application looks most interesting and search for it by name to see a full derivation.`
+    });
+
+    const cards = appsRow.querySelectorAll('.app-card');
+    cards.forEach(c => c.classList.remove('shown'));
+
+    NavController.setAnimating(true);
+    let t = opts.replay ? 0 : 150;
+    cards.forEach((card, i) => {
+      setTimeout(() => card.classList.add('shown'), t + i * 180);
+    });
+    t += cards.length * 180 + 400;
+
+    setTimeout(() => NavController.setAnimating(false), t);
+  }
+};
+
+/* =========================================================
+   NavController — buttons, disabling during animation
+   ========================================================= */
+const NavController = {
+  animating:false,
+
+  setAnimating(val){
+    this.animating = val;
+    this.refresh();
+  },
+
+  refresh(){
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const replayBtn = document.getElementById('replayBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const busy = this.animating;
+    prevBtn.disabled = busy;
+    replayBtn.disabled = busy;
+    resetBtn.disabled = busy;
+
+    const nextExists = BUILT_STATES.has(StateManager.current + 1);
+    nextBtn.disabled = busy || !nextExists;
+    nextBtn.textContent = nextExists ? 'Next ▶' : 'Next ▶ (locked)';
+    nextBtn.title = nextExists ? '' : 'Locked — states 2–15 are not built yet. Review and approve State 1 first.';
+
+    prevBtn.textContent = StateManager.current === 1 ? '◀ Back to Input' : '◀ Previous';
+  }
+};
+
+/* =========================================================
+   InputController / UIController
+   ========================================================= */
+const UIController = {
+  els: {},
+
+  init(){
+    this.els.inputX = document.getElementById('inputX');
+    this.els.inputY = document.getElementById('inputY');
+    this.els.inputZ = document.getElementById('inputZ');
+    this.els.validationMsg = document.getElementById('validationMsg');
+    this.els.startBtn = document.getElementById('startBtn');
+
+    [this.els.inputX, this.els.inputY, this.els.inputZ].forEach(el => {
+      el.addEventListener('input', () => this.validate());
+    });
+
+    document.querySelectorAll('.example-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const [x,y,z] = chip.dataset.example.split(',');
+        this.els.inputX.value = x;
+        this.els.inputY.value = y;
+        this.els.inputZ.value = z;
+        this.validate();
+      });
+    });
+
+    this.els.startBtn.addEventListener('click', () => this.start());
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if(NavController.animating) return;
+      StateManager.previous();
+    });
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if(NavController.animating) return;
+      StateManager.next();
+    });
+    document.getElementById('replayBtn').addEventListener('click', () => {
+      if(NavController.animating) return;
+      StateManager.replay();
+    });
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if(NavController.animating) return;
+      this.showInputScreen();
+    });
+
+    this.validate();
+  },
+
+  validate(){
+    const rawX = this.els.inputX.value;
+    const rawY = this.els.inputY.value;
+    const rawZ = this.els.inputZ.value;
+    const x = parseInt(rawX, 10);
+    const y = parseInt(rawY, 10);
+    const z = parseInt(rawZ, 10);
+
+    [this.els.inputX, this.els.inputY, this.els.inputZ].forEach(el => el.classList.remove('invalid'));
+
+    if(rawX === '' || rawY === '' || rawZ === ''){
+      this.els.validationMsg.textContent = '';
+      this.els.startBtn.disabled = true;
+      return;
+    }
+
+    let msg = '';
+    if(!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)){
+      msg = 'Please enter whole numbers only.';
+    } else if(x <= 0 || y <= 0 || z <= 0){
+      msg = 'x, y and z must all be positive integers.';
+      [this.els.inputX, this.els.inputY, this.els.inputZ].forEach((el, i) => {
+        if([x,y,z][i] <= 0) el.classList.add('invalid');
+      });
+    } else if(!(x >= y && y >= z)){
+      msg = 'Remember the rule: x must be ≥ y, and y must be ≥ z.';
+      this.els.inputX.classList.toggle('invalid', x < y);
+      this.els.inputY.classList.toggle('invalid', !(x >= y && y >= z));
+      this.els.inputZ.classList.toggle('invalid', y < z);
+    } else if(x > 10 || y > 10 || z > 10){
+      msg = 'For smooth animations, please keep x, y and z at 10 or below.';
+    }
+
+    this.els.validationMsg.textContent = msg;
+    this.els.startBtn.disabled = !!msg;
+  },
+
+  start(){
+    const x = parseInt(this.els.inputX.value, 10);
+    const y = parseInt(this.els.inputY.value, 10);
+    const z = parseInt(this.els.inputZ.value, 10);
+    if(!MathEngine.isValidTriple(x,y,z)) return;
+
+    StateManager.init(x, y, z);
+
+    document.getElementById('inputScreen').classList.add('hidden');
+    document.getElementById('labScreen').classList.add('active');
+
+    Renderer.renderState(1);
+  },
+
+  showInputScreen(){
+    document.getElementById('labScreen').classList.remove('active');
+    document.getElementById('inputScreen').classList.remove('hidden');
+  }
+};
+
+UIController.init();
+</script>
+</body>
+</html>
