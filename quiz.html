@@ -1,0 +1,1718 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Quiz</title>
+
+
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    font-family: 'Trebuchet MS', 'Verdana', sans-serif;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  /* ---------- SHARED SCREEN LAYOUT ---------- */
+  .screen {
+    display: none;
+    height: 100vh;
+    height: 100dvh; /* accounts for mobile browser UI */
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    padding: 2vh 4vw;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .screen.active {
+    display: flex;
+  }
+  /* ---------- SCREEN 1: WELCOME ---------- */
+  #welcomeScreen {
+    background: linear-gradient(135deg, #ff9a8b 0%, #ff6a88 25%, #ffb347 50%, #ffcc33 75%, #6ee7b7 100%);
+    background-size: 300% 300%;
+    animation: bgShift 12s ease infinite;
+justify-content: center;
+    gap: 1vh;
+  }
+
+  @keyframes bgShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .welcome-text {
+    color: #ffffff;
+    text-shadow: 3px 3px 0px rgba(0,0,0,0.15);
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  .class-text {
+    font-size: min(9vw, 9vh, 3.5rem);
+    font-weight: 800;
+  }
+
+  .subject-text {
+    font-size: min(11vw, 10vh, 4.2rem);
+    font-weight: 900;
+    letter-spacing: 2px;
+color: var(--wtext-accent, #fff75e);
+text-shadow: var(--wtext-shadow, 3px 3px 0px rgba(0,0,0,0.25));
+  }
+
+  .chapter-text {
+    font-size: min(9vw, 9vh, 3.6rem);
+    font-weight: 900;
+    letter-spacing: 2px;
+ color: var(--wtext, #ffffff);
+ text-shadow: var(--wtext-shadow, 3px 3px 0px rgba(0,0,0,0.25))
+  }
+
+  /* ---------- BUTTONS ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 800;
+    font-family: inherit;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.18);
+  }
+
+  .btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.18);
+  }
+
+  .enter-quiz-btn {
+    margin-top: 2vh;
+    padding: min(2.5vh, 18px) min(8vw, 56px);
+    font-size: min(6vw, 6vh, 1.8rem);
+    background: #2ec4b6;
+    color: #ffffff;
+  }
+
+  /* ---------- SCREEN 2: SUBSCRIBE ---------- */
+  #subscribeScreen {
+    background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 50%, #fbc2eb 100%);
+justify-content: center;
+    gap: 2vh;
+  }
+  .promo-image {
+    max-width: 90vw;
+    max-height: 65vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    flex-shrink: 1;
+    min-height: 0;
+  }
+
+  .button-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 2vw;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .subscribe-btn,
+  .quiz-btn {
+    flex: 1 1 180px;
+    padding: min(2vh, 16px) min(2vw, 18px);
+    font-size: min(3.2vw, 3.2vh, 1.2rem);
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .subscribe-btn {
+    background: #ff3b3b;
+    color: #ffffff;
+  }
+
+  .quiz-btn {
+    background: #ffd23f;
+    color: #5a3e00;
+  }
+
+
+  :root {
+    --primary: #4F46E5;
+    --primary-dark: #3730A3;
+    --primary-light: #EEF2FF;
+    --accent: #0D9488;
+    --bg: #F4F6FB;
+    --card: #FFFFFF;
+    --text: #1F2937;
+    --muted: #6B7280;
+    --border: #E2E8F0;
+    --correct: #15803D;
+    --correct-bg: #DCFCE7;
+    --wrong: #B91C1C;
+    --wrong-bg: #FEE2E2;
+    --flag: #B45309;
+    --flag-bg: #FEF3C7;
+    --flag-border: #FBBF24;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 1rem;
+    padding-bottom: 2rem;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 0.9rem;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(31, 41, 55, 0.08);
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+
+  h1, h2, h3 {
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+  }
+
+  h1 { font-size: 1.5rem; color: var(--primary-dark); }
+  h2 { font-size: 1.2rem; color: var(--primary-dark); }
+  h3 { font-size: 1.05rem; }
+
+  p { line-height: 1.5; margin: 0.4rem 0; }
+
+  .muted { color: var(--muted); font-size: 0.9rem; }
+
+  .center { text-align: center; }
+
+  /* Buttons */
+  button {
+    font-family: inherit;
+    font-size: 1rem;
+    border: none;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    min-height: 3rem;
+    padding: 0.6rem 1.2rem;
+    transition: background 0.15s ease, transform 0.05s ease;
+  }
+  button:active { transform: scale(0.98); }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    width: 100%;
+  }
+  .btn-primary:hover { background: var(--primary-dark); }
+
+  .btn-secondary {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    width: 100%;
+    border: 1px solid #C7D2FE;
+  }
+  .btn-secondary:hover { background: #E0E7FF; }
+
+  .btn-flag {
+    background: var(--flag-bg);
+    color: var(--flag);
+    border: 1px solid var(--flag-border);
+  }
+  .btn-flag:hover { background: #FDE9C0; }
+
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+  .btn-row > button {
+    flex: 1 1 30%;
+    min-width: 6rem;
+  }
+
+  .btn-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin-top: 1rem;
+  }
+
+  /* Welcome screen */
+  .welcome-header {
+    text-align: center;
+    padding: 0.5rem 0 1rem 0;
+  }
+  .welcome-header .subject {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+  }
+  .welcome-header .meta {
+    font-size: 1rem;
+    color: var(--text);
+    margin-top: 0.3rem;
+  }
+  .welcome-header .qcount {
+    margin-top: 0.8rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .credit-box {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 0.9rem;
+    margin-top: 1rem;
+    line-height: 1.5;
+  }
+  .credit-box a {
+    color: var(--primary);
+    word-break: break-all;
+  }
+
+  /* Progress + flagged panel */
+  .top-bar {
+    position: relative;
+  }
+  .progress-track {
+    width: 100%;
+    height: 0.6rem;
+    background: var(--border);
+    border-radius: 1rem;
+   overflow-x: hidden;
+   overflow-y: auto;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.2s ease;
+  }
+  .progress-label {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .flag-panel {
+    margin-top: 0.7rem;
+  }
+  .flag-panel-title {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+  .flag-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .flag-chip {
+    background: var(--flag-bg);
+    color: var(--flag);
+    border: 1px solid var(--flag-border);
+    border-radius: 0.5rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+  }
+  .flag-chip:hover { background: #FDE9C0; }
+
+  /* Question */
+  .question-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.9rem;
+    white-space: pre-line;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    text-align: left;
+    background: #FAFAFC;
+    border: 1.5px solid var(--border);
+    border-radius: 0.6rem;
+    padding: 0.7rem 0.9rem;
+    min-height: 3rem;
+    font-size: 1rem;
+    color: var(--text);
+  }
+  .option:hover { border-color: var(--primary); }
+  .option.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    font-weight: 600;
+  }
+  .option .opt-letter {
+    flex: 0 0 1.8rem;
+    height: 1.8rem;
+    border-radius: 50%;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .option.selected .opt-letter {
+    background: var(--primary);
+    color: #fff;
+  }
+  .option.correct {
+    border-color: var(--correct);
+    background: var(--correct-bg);
+  }
+  .option.correct .opt-letter { background: var(--correct); color: #fff; }
+  .option.incorrect {
+    border-color: var(--wrong);
+    background: var(--wrong-bg);
+  }
+  .option.incorrect .opt-letter { background: var(--wrong); color: #fff; }
+
+  /* Match the Following */
+  .match-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 0.6rem;
+  }
+  @media (min-width: 30rem) {
+    .match-table { flex-direction: row; gap: 1.2rem; }
+  }
+  .match-col {
+    flex: 1 1 50%;
+    background: #FAFAFC;
+    border: 1px solid var(--border);
+    border-radius: 0.6rem;
+    padding: 0.6rem 0.8rem;
+  }
+  .match-col-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+  .match-item {
+    padding: 0.25rem 0;
+    font-size: 0.97rem;
+  }
+
+  .ar-block p { margin: 0.3rem 0; }
+
+  /* Results */
+  .result-summary {
+    text-align: center;
+    padding: 0.5rem 0 1rem 0;
+  }
+  .result-score {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary-dark);
+  }
+  .result-q-card .question-text { margin-bottom: 0.6rem; }
+  .result-q-card .options { margin-bottom: 0.7rem; }
+  .copy-btn {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border: 1px solid #C7D2FE;
+    font-size: 0.9rem;
+    min-height: 2.6rem;
+    padding: 0.4rem 0.9rem;
+  }
+  .copy-btn:hover { background: #E0E7FF; }
+  .your-ans-note {
+    font-size: 0.9rem;
+    margin: 0.4rem 0;
+  }
+  .your-ans-note.right { color: var(--correct); }
+  .your-ans-note.wrong { color: var(--wrong); }
+
+  /* Modal */
+  .overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(31,41,55,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 50;
+  }
+  .modal {
+    background: var(--card);
+    border-radius: 0.9rem;
+    padding: 1.25rem;
+    max-width: 26rem;
+    width: 100%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+  .modal h3 { margin-bottom: 0.6rem; }
+  .modal p { margin-bottom: 0.8rem; }
+.match-item {
+    display: flex;
+    align-items: flex-start;
+    margin: 6px 0;
+}
+
+.match-label {
+    width: 20px;      /* Fixed width for A., B., C., D. */
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.match-text {
+    flex: 1;
+}
+
+.match-left .match-label {
+    width: 20px;
+}
+
+.match-right .match-label {
+    width: 30px;
+}
+
+ /* ---------- image_mcq: question image ---------- */
+  .image-mcq-area {
+    width: 100%;
+    background: #F8F9FF;
+    border: 1.5px solid var(--border);
+    border-radius: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.9rem;
+    min-height: 180px;
+    overflow: hidden;
+  }
+  .image-mcq-area img {
+    max-width: 100%;
+    max-height: 340px;
+    object-fit: contain;
+    border-radius: 0.5rem;
+    display: block;
+  }
+  .image-mcq-placeholder {
+    color: #9CA3AF;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 1rem;
+  }
+
+
+
+</style>
+
+</head>
+<body>
+  <!-- SCREEN 1: Quiz Screen -->
+  
+<div id="quizScreen" class="screen active">
+<div id="app"></div>
+</div>
+<script>
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(function(el) {
+        el.classList.remove('active');
+      });
+      document.getElementById(id).classList.add('active');
+    }
+/* ================= QUESTION BANK ================= */
+const QUESTION_BANK = [﻿  {
+    "id": 31,
+    "type": "mcq",
+    "question": "5 × 1 = ?",
+    "options": ["4", "6", "5", "7"],
+    "answer": "C",
+    "exp": ""
+  },
+  {
+    "id": 32,
+    "type": "mcq",
+    "question": "5 × 2 = ?",
+    "options": ["11", "9", "12", "10"],
+    "answer": "D",
+    "exp": ""
+  },
+  {
+    "id": 33,
+    "type": "mcq",
+    "question": "5 × 3 = ?",
+    "options": ["14", "15", "16", "13"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 34,
+    "type": "mcq",
+    "question": "5 × 4 = ?",
+    "options": ["21", "19", "18", "20"],
+    "answer": "D",
+    "exp": ""
+  },
+  {
+    "id": 35,
+    "type": "mcq",
+    "question": "5 × 5 = ?",
+    "options": ["25", "24", "23", "26"],
+    "answer": "A",
+    "exp": ""
+  },
+  {
+    "id": 36,
+    "type": "mcq",
+    "question": "5 × 6 = ?",
+    "options": ["29", "31", "30", "32"],
+    "answer": "C",
+    "exp": ""
+  },
+  {
+    "id": 37,
+    "type": "mcq",
+    "question": "5 × 7 = ?",
+    "options": ["34", "35", "36", "33"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 38,
+    "type": "mcq",
+    "question": "5 × 8 = ?",
+    "options": ["40", "39", "41", "42"],
+    "answer": "A",
+    "exp": ""
+  },
+  {
+    "id": 39,
+    "type": "mcq",
+    "question": "5 × 9 = ?",
+    "options": ["46", "45", "44", "43"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 40,
+    "type": "mcq",
+    "question": "5 × 10 = ?",
+    "options": ["49", "50", "51", "52"],
+    "answer": "B",
+    "exp": ""
+  },
+
+  {
+    "id": 41,
+    "type": "mcq",
+    "question": "6 × 1 = ?",
+    "options": ["7", "5", "6", "8"],
+    "answer": "C",
+    "exp": ""
+  },
+  {
+    "id": 42,
+    "type": "mcq",
+    "question": "6 × 2 = ?",
+    "options": ["13", "12", "11", "10"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 43,
+    "type": "mcq",
+    "question": "6 × 3 = ?",
+    "options": ["19", "17", "18", "20"],
+    "answer": "C",
+    "exp": ""
+  },
+  {
+    "id": 44,
+    "type": "mcq",
+    "question": "6 × 4 = ?",
+    "options": ["23", "24", "25", "22"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 45,
+    "type": "mcq",
+    "question": "6 × 5 = ?",
+    "options": ["31", "29", "28", "30"],
+    "answer": "D",
+    "exp": ""
+  },
+  {
+    "id": 46,
+    "type": "mcq",
+    "question": "6 × 6 = ?",
+    "options": ["35", "36", "37", "38"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 47,
+    "type": "mcq",
+    "question": "6 × 7 = ?",
+    "options": ["43", "41", "40", "42"],
+    "answer": "D",
+    "exp": ""
+  },
+  {
+    "id": 48,
+    "type": "mcq",
+    "question": "6 × 8 = ?",
+    "options": ["47", "48", "49", "46"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 49,
+    "type": "mcq",
+    "question": "6 × 9 = ?",
+    "options": ["54", "53", "55", "52"],
+    "answer": "A",
+    "exp": ""
+  },
+  {
+    "id": 50,
+    "type": "mcq",
+    "question": "6 × 10 = ?",
+    "options": ["61", "62", "60", "59"],
+    "answer": "C",
+    "exp": ""
+  },
+
+  {
+    "id": 51,
+    "type": "mcq",
+    "question": "7 × 1 = ?",
+    "options": ["8", "7", "6", "9"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 52,
+    "type": "mcq",
+    "question": "7 × 2 = ?",
+    "options": ["15", "14", "13", "16"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 53,
+    "type": "mcq",
+    "question": "7 × 3 = ?",
+    "options": ["22", "20", "19", "21"],
+    "answer": "D",
+    "exp": ""
+  },
+  {
+    "id": 54,
+    "type": "mcq",
+    "question": "7 × 4 = ?",
+    "options": ["28", "27", "29", "30"],
+    "answer": "A",
+    "exp": ""
+  },
+  {
+    "id": 55,
+    "type": "mcq",
+    "question": "7 × 5 = ?",
+    "options": ["36", "34", "35", "33"],
+    "answer": "C",
+    "exp": ""
+  },
+  {
+    "id": 56,
+    "type": "mcq",
+    "question": "7 × 6 = ?",
+    "options": ["42", "41", "43", "40"],
+    "answer": "A",
+    "exp": ""
+  },
+  {
+    "id": 57,
+    "type": "mcq",
+    "question": "7 × 7 = ?",
+    "options": ["48", "50", "49", "51"],
+    "answer": "C",
+    "exp": ""
+  },
+  {
+    "id": 58,
+    "type": "mcq",
+    "question": "7 × 8 = ?",
+    "options": ["57", "56", "55", "58"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 59,
+    "type": "mcq",
+    "question": "7 × 9 = ?",
+    "options": ["63", "61", "62", "64"],
+    "answer": "A",
+    "exp": ""
+  },
+  {
+    "id": 60,
+    "type": "mcq",
+    "question": "7 × 10 = ?",
+    "options": ["69", "71", "70", "68"],
+    "answer": "C",
+    "exp": ""
+  },
+
+  {
+    "id": 61,
+    "type": "mcq",
+    "question": "8 × 1 = ?",
+    "options": ["9", "7", "10", "8"],
+    "answer": "D",
+    "exp": ""
+  },
+  {
+    "id": 62,
+    "type": "mcq",
+    "question": "8 × 2 = ?",
+    "options": ["15", "16", "17", "18"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 63,
+    "type": "mcq",
+    "question": "8 × 3 = ?",
+    "options": ["24", "23", "25", "22"],
+    "answer": "A",
+    "exp": ""
+  },
+  {
+    "id": 64,
+    "type": "mcq",
+    "question": "8 × 4 = ?",
+    "options": ["31", "33", "32", "30"],
+    "answer": "C",
+    "exp": ""
+  },
+  {
+    "id": 65,
+    "type": "mcq",
+    "question": "8 × 5 = ?",
+    "options": ["39", "41", "42", "40"],
+    "answer": "D",
+    "exp": ""
+  },
+  {
+    "id": 66,
+    "type": "mcq",
+    "question": "8 × 6 = ?",
+    "options": ["48", "49", "47", "46"],
+    "answer": "A",
+    "exp": ""
+  },
+  {
+    "id": 67,
+    "type": "mcq",
+    "question": "8 × 7 = ?",
+    "options": ["57", "55", "56", "58"],
+    "answer": "C",
+    "exp": ""
+  },
+  {
+    "id": 68,
+    "type": "mcq",
+    "question": "8 × 8 = ?",
+    "options": ["63", "64", "65", "62"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 69,
+    "type": "mcq",
+    "question": "8 × 9 = ?",
+    "options": ["73", "72", "71", "74"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 70,
+    "type": "mcq",
+    "question": "8 × 10 = ?",
+    "options": ["81", "79", "80", "82"],
+    "answer": "C",
+    "exp": ""
+  },
+
+  {
+    "id": 71,
+    "type": "mcq",
+    "question": "9 × 1 = ?",
+    "options": ["9", "8", "10", "11"],
+    "answer": "A",
+    "exp": ""
+  },
+  {
+    "id": 72,
+    "type": "mcq",
+    "question": "9 × 2 = ?",
+    "options": ["17", "18", "19", "16"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 73,
+    "type": "mcq",
+    "question": "9 × 3 = ?",
+    "options": ["26", "28", "27", "29"],
+    "answer": "C",
+    "exp": ""
+  },
+  {
+    "id": 74,
+    "type": "mcq",
+    "question": "9 × 4 = ?",
+    "options": ["37", "36", "35", "34"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 75,
+    "type": "mcq",
+    "question": "9 × 5 = ?",
+    "options": ["44", "46", "45", "47"],
+    "answer": "C",
+    "exp": ""
+  },
+  {
+    "id": 76,
+    "type": "mcq",
+    "question": "9 × 6 = ?",
+    "options": ["54", "53", "55", "52"],
+    "answer": "A",
+    "exp": ""
+  },
+  {
+    "id": 77,
+    "type": "mcq",
+    "question": "9 × 7 = ?",
+    "options": ["62", "64", "63", "65"],
+    "answer": "C",
+    "exp": ""
+  },
+  {
+    "id": 78,
+    "type": "mcq",
+    "question": "9 × 8 = ?",
+    "options": ["73", "72", "71", "74"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 79,
+    "type": "mcq",
+    "question": "9 × 9 = ?",
+    "options": ["82", "81", "80", "79"],
+    "answer": "B",
+    "exp": ""
+  },
+  {
+    "id": 80,
+    "type": "mcq",
+    "question": "9 × 10 = ?",
+    "options": ["91", "89", "92", "90"],
+    "answer": "D",
+    "exp": ""
+  }﻿﻿﻿];			
+const SUBJECT="Please Practice Repeatedly";			
+const CLASS_NAME="";			
+const CHAPTER="";			
+const STORAGE_KEY = "quizProgress_numbersAndShapePatterns";			
+			
+/* ================= STATE ================= */			
+let state = null;			
+			
+/* ================= HELPERS ================= */			
+function shuffle(arr) {			
+  const a = arr.slice();			
+  for (let i = a.length - 1; i > 0; i--) {			
+    const j = Math.floor(Math.random() * (i + 1));			
+    [a[i], a[j]] = [a[j], a[i]];			
+  }			
+  return a;			
+}			
+			
+function buildQuiz(randomizeQuestions = false) {	
+  const order = randomizeQuestions
+    ? shuffle(QUESTION_BANK.map((_, i) => i))
+    : QUESTION_BANK.map((_, i) => i);
+		
+  const questions = order.map(idx => {			
+    const src = QUESTION_BANK[idx];			
+    const optOrder = shuffle(src.options.map((_, i) => i));			
+    const options = optOrder.map(i => src.options[i]);			
+    const answerIndex = typeof src.answer === "string" ? src.answer.toUpperCase().charCodeAt(0) - 65 : src.answer;			
+    const correctText = src.options[answerIndex];			
+    const answer = options.indexOf(correctText);			
+    return Object.assign({}, src, {			
+      q: src.q !== undefined ? src.q : src.question,			
+      exp: src.exp !== undefined ? src.exp : src.explanation,			
+      options,			
+      answer			
+    });			
+  });			
+  return {			
+    screen: "quiz",			
+    current: 0,			
+    questions: questions,			
+    answers: new Array(questions.length).fill(null),			
+    flagged: new Array(questions.length).fill(false),			
+    submitted: false,			
+    submittedQuestions: new Array(questions.length).fill(false)			
+  };			
+}			
+			
+function saveState() {			
+  try {			
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));			
+  } catch (e) { /* ignore storage errors */ }			
+}			
+			
+function loadState() {			
+  try {			
+    const raw = localStorage.getItem(STORAGE_KEY);			
+    return raw ? JSON.parse(raw) : null;			
+  } catch (e) { return null; }			
+}			
+			
+function clearState() {			
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}			
+}			
+			
+function letterFor(i) { return String.fromCharCode(65 + i); }			
+			
+function escapeHtml(str) {			
+  return String(str).replace(/[&<>"']/g, c => ({			
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"			
+  }[c]));			
+}			
+			
+/* Plain-text representation of a question, for copying */			
+function questionPlainText(q) {			
+  if (q.type === "match") {			
+    let lines = ["Match the Following:"];			
+    for (let i = 0; i < q.left.length; i++) {			
+      lines.push(q.left[i] + "    " + (q.right[i] || ""));			
+    }			
+    return lines.join("\n");			
+  }			
+  if (q.type === "ar") {			
+    return "Assertion (A): " + q.assertion + "\nReason (R): " + q.reason;			
+  }	
+
+if (q.type === "image_mcq") {			
+    return "[Image Question] " + (q.image || "no image");			
+  }		
+		
+  return q.q;			
+}			
+	
+		
+/* ================= RENDER: QUESTION CONTENT ================= */			
+const leftLabels = ["A","B","C","D","E","F","G","H"];			
+const rightLabels = ["i","ii","iii","iv","v","vi","vii","viii"];			
+			
+			
+			
+			
+function renderQuestionContent(q) {			
+  if (q.type === "match") {			
+let left = q.left.map((li, idx) =>			
+  `<div class="match-item match-left">			
+      <span class="match-label">${leftLabels[idx]}.</span>			
+      <span class="match-text">${escapeHtml(li)}</span>			
+   </div>`			
+).join("");			
+			
+let right = q.right.map((ri, idx) =>			
+  `<div class="match-item match-right">			
+      <span class="match-label">${rightLabels[idx]}.</span>			
+      <span class="match-text">${escapeHtml(ri)}</span>			
+   </div>`			
+).join("");			
+    return `			
+      <div class="question-text">Match the following:</div>			
+      <div class="match-table">			
+        <div class="match-col">			
+          <div class="match-col-title">Column A</div>			
+          ${left}			
+        </div>			
+        <div class="match-col">			
+          <div class="match-col-title">Column B</div>			
+          ${right}			
+        </div>			
+      </div>`;			
+  }			
+  if (q.type === "ar") {			
+    return `			
+      <div class="question-text">			
+        <div class="ar-block">			
+          <p><strong>Assertion (A):</strong> ${escapeHtml(q.assertion)}</p>			
+          <p><strong>Reason (R):</strong> ${escapeHtml(q.reason)}</p>			
+        </div>			
+      </div>`;			
+  }
+
+if (q.type === "image_mcq") {			
+    const imgHtml = q.image			
+      ? `<img src="${escapeHtml(q.image)}" alt="Question ${escapeHtml(String(q.id))}"			
+             onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />			
+         <div class="image-mcq-placeholder" style="display:none;">			
+           Image not found: ${escapeHtml(q.image)}			
+         </div>`			
+      : `<div class="image-mcq-placeholder">No image provided.</div>`;			
+    return `<div class="image-mcq-area">${imgHtml}</div>`;			
+  }			
+
+			
+  return `<div class="question-text">${escapeHtml(q.q)}</div>`;			
+}			
+			
+/* ================= MAIN RENDER ================= */
+function render() {
+  const app = document.getElementById("app");
+
+  if (!state || state.screen === "welcome") {
+    app.innerHTML = renderWelcome(false);
+    attachWelcomeEvents(false);
+  } else if (state.screen === "quiz") {
+    app.innerHTML = renderQuiz();
+    attachQuizEvents();
+  } else if (state.screen === "results") {
+    app.innerHTML = renderResults();
+    attachResultsEvents();
+  }
+}			
+/* ================= WELCOME SCREEN ================= */
+function renderWelcome(hasProgress) {
+
+  let resumeHtml = "";
+  if (hasProgress) {
+    resumeHtml = `
+      <button class="btn-secondary" id="resumeBtn" style="width:100%;margin-bottom:0.5rem;">
+        ▶ Resume from where I left off
+      </button>
+      <div style="text-align:center;color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">— or start a new attempt —</div>`;
+  }
+
+  return `
+    <div class="card welcome-header">
+      <div class="subject">${escapeHtml(SUBJECT)}</div>
+      <div class="meta">${escapeHtml(CLASS_NAME)} &mdash; ${escapeHtml(CHAPTER)}</div>
+      <div class="qcount">No of Questions: ${QUESTION_BANK.length}</div>
+    </div>
+    <div class="card">
+      <h2 style="text-align:center;margin-bottom:0.3rem;">Choose Question Order</h2>
+      <p class="muted center" style="margin-bottom:1.2rem;">How would you like the questions presented?</p>
+      ${resumeHtml}
+      <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
+        <button id="standardBtn" style="
+          flex:1 1 45%;
+          min-height:5rem;
+          background:#EEF2FF;
+          color:#3730A3;
+          border:2px solid #C7D2FE;
+          border-radius:0.8rem;
+          font-size:1rem;
+          font-weight:700;
+          cursor:pointer;
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          justify-content:center;
+          gap:0.3rem;
+          padding:0.8rem;
+          transition:background 0.15s;
+        ">
+          Standard Order
+          <span style="font-size:0.78rem;font-weight:400;color:#6B7280;">Questions in fixed sequence</span>
+        </button>
+        <button id="randomBtn" style="
+          flex:1 1 45%;
+          min-height:5rem;
+          background:#ECFDF5;
+          color:#065F46;
+          border:2px solid #6EE7B7;
+          border-radius:0.8rem;
+          font-size:1rem;
+          font-weight:700;
+          cursor:pointer;
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          justify-content:center;
+          gap:0.3rem;
+          padding:0.8rem;
+          transition:background 0.15s;
+        ">
+          Random Order
+          <span style="font-size:0.78rem;font-weight:400;color:#6B7280;">Questions in random sequence</span>
+        </button>
+      </div>
+      <div class="credit-box"><br></div>
+    </div>`;
+}			
+			
+function attachWelcomeEvents(hasProgress) {
+  const standardBtn = document.getElementById("standardBtn");
+  if (standardBtn) {
+    standardBtn.addEventListener("click", () => {
+      clearState();
+      state = buildQuiz(false);
+      saveState();
+      render();
+    });
+  }
+  const randomBtn = document.getElementById("randomBtn");
+  if (randomBtn) {
+    randomBtn.addEventListener("click", () => {
+      clearState();
+      state = buildQuiz(true);
+      saveState();
+      render();
+    });
+  }
+  const resumeBtn = document.getElementById("resumeBtn");
+  if (resumeBtn) {
+    resumeBtn.addEventListener("click", () => {
+      state = loadState();
+      render();
+    });
+  }
+}			
+			
+/* ================= QUIZ SCREEN ================= */			
+function renderQuiz() {			
+  const total = state.questions.length;			
+  const idx = state.current;			
+  const q = state.questions[idx];			
+  const progressPct = Math.round(((idx + 1) / total) * 100);			
+			
+  const flaggedIndices = state.flagged			
+    .map((f, i) => (f ? i : -1))			
+    .filter(i => i !== -1);			
+			
+  let flagPanelHtml = "";			
+  if (flaggedIndices.length > 0) {			
+    const chips = flaggedIndices			
+      .map(i => `<div class="flag-chip" data-jump="${i}">${i + 1}</div>`)			
+      .join("");			
+    flagPanelHtml = `			
+      <div class="flag-panel">			
+        <div class="flag-panel-title">Answer Later</div>			
+        <div class="flag-chips">${chips}</div>			
+      </div>`;			
+  }			
+			
+  const questionSubmitted = state.submittedQuestions && state.submittedQuestions[idx];			
+  const optionsHtml = q.options.map((opt, i) => {			
+    let cls = "option";			
+    if (state.answers[idx] === i) cls += " selected";			
+			
+    if (questionSubmitted) {			
+      if (i === q.answer) cls += " correct";			
+      else if (i === state.answers[idx] && state.answers[idx] !== q.answer) cls += " incorrect";			
+    }			
+			
+    const disabledAttr = questionSubmitted ? "disabled" : "";			
+			
+    return `			
+      <button class="${cls}" data-opt="${i}" ${disabledAttr}>			
+        <span class="opt-letter">${letterFor(i)}</span>			
+        <span>${escapeHtml(opt)}</span>			
+      </button>`;			
+  }).join("");			
+			
+  const isLast = idx === total - 1;			
+  let nextLabel = isLast ? "Submit" : "Next";			
+  if (!questionSubmitted && state.answers[idx] !== null) nextLabel = "Submit Answer";			
+  const prevDisabled = idx === 0 ? "disabled" : "";			
+			
+  const allAnswered = state.answers.every(a => a !== null);			
+  const noneFlagged = state.flagged.every(f => !f);			
+  const showEarlySubmit = !isLast && allAnswered && noneFlagged;			
+			
+  const earlySubmitHtml = showEarlySubmit			
+    ? `<button class="btn-primary" id="earlySubmitBtn">Submit</button>`			
+    : "";			
+			
+  let feedbackHtml = "";			
+			
+if (questionSubmitted) {			
+  const correct = state.answers[idx] === q.answer;			
+			
+  feedbackHtml = `			
+    <div style="			
+      margin:1rem 0;			
+      padding:0.8rem;			
+      border-radius:8px;			
+      background:${correct ? "#DCFCE7" : "#FEE2E2"};			
+    ">			
+      <strong>${correct ? "Correct!" : "Incorrect!"}</strong><br>			
+      Correct Answer: ${letterFor(q.answer)}<br><br>			
+      ${escapeHtml(q.exp)}			
+    </div>			
+  `;			
+}			
+			
+			
+  return `			
+    <div class="card top-bar">			
+      <div class="progress-track"><div class="progress-fill" style="width:${progressPct}%"></div></div>			
+      <div class="progress-label">			
+        <span>Question ${idx + 1} of ${total}</span>			
+        <span>${state.answers.filter(a => a !== null).length} answered</span>			
+      </div>			
+      ${flagPanelHtml}			
+    </div>			
+    <div class="card">			
+      ${renderQuestionContent(q)}			
+      <div class="options">${optionsHtml}</div>			
+      <div class="btn-row">			
+        <button class="btn-secondary" id="prevBtn" ${prevDisabled}>Previous</button>			
+        ${!questionSubmitted ? `<button class="btn-flag" id="flagBtn">Answer Later</button>` : ""}			
+        <button class="btn-primary" id="nextBtn">${nextLabel}</button>			
+        ${earlySubmitHtml}			
+      </div>			
+      ${feedbackHtml}			
+    </div>			
+    <div id="modalRoot"></div>`;			
+}			
+			
+function attachQuizEvents() {			
+  const idx = state.current;			
+			
+  document.querySelectorAll(".option").forEach(btn => {			
+    btn.addEventListener("click", () => {			
+      if (state.submittedQuestions && state.submittedQuestions[idx]) return;			
+      const optIdx = parseInt(btn.getAttribute("data-opt"), 10);			
+      state.answers[idx] = optIdx;			
+      state.flagged[idx] = false;			
+      saveState();			
+      render();			
+    });			
+  });			
+			
+  document.querySelectorAll(".flag-chip").forEach(chip => {			
+    chip.addEventListener("click", () => {			
+      const jumpIdx = parseInt(chip.getAttribute("data-jump"), 10);			
+      goToQuestion(jumpIdx);			
+    });			
+  });			
+			
+  const prevBtn = document.getElementById("prevBtn");			
+  if (prevBtn) {			
+    prevBtn.addEventListener("click", () => {			
+      autoFlagIfUnanswered(idx);			
+      if (idx > 0) {			
+        state.current = idx - 1;			
+        saveState();			
+        render();			
+      }			
+    });			
+  }			
+			
+  const flagBtn = document.getElementById("flagBtn");			
+  if (flagBtn) flagBtn.addEventListener("click", () => {			
+    state.answers[idx] = null;			
+    state.flagged[idx] = true;			
+    if (idx < state.questions.length - 1) {			
+      state.current = idx + 1;			
+    }			
+    saveState();			
+    render();			
+  });			
+			
+  const nextBtn = document.getElementById("nextBtn");			
+  nextBtn.addEventListener("click", () => {			
+    const questionSubmitted = state.submittedQuestions && state.submittedQuestions[idx];			
+			
+    if (!questionSubmitted && state.answers[idx] !== null) {			
+      state.submittedQuestions[idx] = true;			
+      saveState();			
+      render();			
+      return;			
+    }			
+			
+    const isLast = idx === state.questions.length - 1;			
+    if (isLast) {			
+      handleSubmitClick();			
+    } else {			
+      autoFlagIfUnanswered(idx);			
+      state.current = idx + 1;			
+      saveState();			
+      render();			
+    }			
+  });			
+			
+  const earlySubmitBtn = document.getElementById("earlySubmitBtn");			
+  if (earlySubmitBtn) {			
+    earlySubmitBtn.addEventListener("click", () => {			
+      handleSubmitClick();			
+    });			
+  }			
+}			
+			
+function autoFlagIfUnanswered(idx) {			
+  if (state.answers[idx] === null) {			
+    state.flagged[idx] = true;			
+  }			
+}			
+			
+function goToQuestion(targetIdx) {			
+  autoFlagIfUnanswered(state.current);			
+  state.current = targetIdx;			
+  saveState();			
+  render();			
+}			
+			
+/* ================= SUBMIT FLOW ================= */			
+function handleSubmitClick() {			
+  autoFlagIfUnanswered(state.current);			
+  saveState();			
+			
+  const total = state.questions.length;			
+  const unanswered = [];			
+  for (let i = 0; i < total; i++) {			
+    if (state.answers[i] === null) unanswered.push(i + 1);			
+  }			
+			
+  if (unanswered.length > 0) {			
+    showModal(			
+      "Some questions are unanswered",			
+      `The following question number(s) are not answered: <strong>${unanswered.join(", ")}</strong>.<br><br>Would you like to go back and answer them, or submit anyway?`,			
+      [			
+        { label: "Go Back", className: "btn-secondary", action: () => {			
+            closeModal();			
+            const firstUnansweredIdx = unanswered[0] - 1;			
+            state.current = firstUnansweredIdx;			
+            saveState();			
+            render();			
+          }			
+        },			
+        { label: "Submit Anyway", className: "btn-primary", action: () => {			
+            closeModal();			
+            finalizeSubmission();			
+          }			
+        }			
+      ]			
+    );			
+  } else {			
+    const answeredCount = total;			
+    const flaggedCount = state.flagged.filter(Boolean).length;			
+    showModal(			
+      "Ready to submit?",			
+      `Answered: <strong>${answeredCount}</strong><br>Flagged for review: <strong>${flaggedCount}</strong><br>Unanswered: <strong>0</strong><br><br>Submit the Grand Test now?`,			
+      [			
+        { label: "Cancel", className: "btn-secondary", action: () => closeModal() },			
+        { label: "Submit", className: "btn-primary", action: () => {			
+            closeModal();			
+            finalizeSubmission();			
+          }			
+        }			
+      ]			
+    );			
+  }			
+}			
+			
+function finalizeSubmission() {			
+  state.submitted = true;			
+  state.screen = "results";			
+  saveState();			
+  render();			
+}			
+			
+/* ================= MODAL ================= */			
+function showModal(title, message, buttons) {			
+  const root = document.getElementById("modalRoot");			
+  const buttonsHtml = buttons.map((b, i) =>			
+    `<button class="${b.className}" data-btn="${i}" style="margin-bottom:0.5rem;">${escapeHtml(b.label)}</button>`			
+  ).join("");			
+			
+  root.innerHTML = `			
+    <div class="overlay" id="overlay">			
+      <div class="modal">			
+        <h3>${escapeHtml(title)}</h3>			
+        <p>${message}</p>			
+        <div class="btn-stack">${buttonsHtml}</div>			
+      </div>			
+    </div>`;			
+			
+  buttons.forEach((b, i) => {			
+    document.querySelector(`[data-btn="${i}"]`).addEventListener("click", b.action);			
+  });			
+}			
+			
+function closeModal() {			
+  const root = document.getElementById("modalRoot");			
+  if (root) root.innerHTML = "";			
+}			
+			
+			
+			
+			
+/* ================= RESULTS SCREEN ================= */			
+function renderResults() {			
+  const total = state.questions.length;			
+  let score = 0;			
+  state.questions.forEach((q, i) => {			
+    if (state.answers[i] === q.answer) score++;			
+  });			
+			
+  const questionCards = state.questions.map((q, i) => {			
+    const userAns = state.answers[i];			
+    const correctAns = q.answer;			
+    const isCorrect = userAns === correctAns;			
+			
+    const optionsHtml = q.options.map((opt, oi) => {			
+      let cls = "option";			
+      if (oi === correctAns) cls += " correct";			
+      else if (oi === userAns && !isCorrect) cls += " incorrect";			
+      return `			
+        <div class="${cls}">			
+          <span class="opt-letter">${letterFor(oi)}</span>			
+          <span>${escapeHtml(opt)}</span>			
+        </div>`;			
+    }).join("");			
+			
+    let noteHtml;			
+    if (userAns === null) {			
+      noteHtml = `<div class="your-ans-note wrong">Not Answered &mdash; Correct answer: ${letterFor(correctAns)}</div>`;			
+    } else if (isCorrect) {			
+      noteHtml = `<div class="your-ans-note right">Your answer: ${letterFor(userAns)} &mdash; Correct!</div>`;			
+    } else {			
+      noteHtml = `<div class="your-ans-note wrong">Your answer: ${letterFor(userAns)} &mdash; Correct answer: ${letterFor(correctAns)}</div>`;			
+    }			
+			
+    return `			
+      <div class="card result-q-card">			
+        <div class="muted">Question ${i + 1} of ${total}</div>			
+        ${renderQuestionContent(q)}			
+        <div class="options">${optionsHtml}</div>			
+        ${noteHtml}			
+        <p><strong>Explanation:</strong> ${escapeHtml(q.exp)}</p>			
+        <button class="copy-btn" data-copy="${i}">Copy</button>			
+      </div>`;			
+  }).join("");			
+			
+  return `			
+    <div class="card result-summary">			
+      <h2>Grand Test Results</h2>			
+      <div class="result-score">${score} / ${total}</div>			
+      <p class="muted">Review your answers below</p>			
+    </div>			
+    ${questionCards}			
+    <div class="card">			
+      <div class="btn-stack">			
+        <button class="btn-primary" id="retakeBtn">Retake Grand Test</button>			
+      </div>			
+    </div>`;			
+}			
+			
+function attachResultsEvents() {			
+  document.querySelectorAll("[data-copy]").forEach(btn => {			
+    btn.addEventListener("click", () => {			
+      const i = parseInt(btn.getAttribute("data-copy"), 10);			
+      const q = state.questions[i];			
+      const userAns = state.answers[i];			
+      const correctAns = q.answer;			
+      const userAnsText = userAns === null ? "Not Answered" : `${letterFor(userAns)}) ${q.options[userAns]}`;			
+      const correctAnsText = `${letterFor(correctAns)}) ${q.options[correctAns]}`;			
+			
+      const text =			
+        "Question " + (i + 1) + ":\n" + questionPlainText(q) + "\n\n" +			
+        "Options:\n" + q.options.map((o, oi) => letterFor(oi) + ") " + o).join("\n") + "\n\n" +			
+        "Your Answer: " + userAnsText + "\n" +			
+        "Correct Answer: " + correctAnsText + "\n\n" +			
+        "Explanation: " + q.exp;			
+			
+      copyToClipboard(text, btn);			
+    });			
+  });			
+			
+  const retakeBtn = document.getElementById("retakeBtn");
+  retakeBtn.addEventListener("click", () => {
+    clearState();
+    state = null;
+    const app = document.getElementById("app");
+    app.innerHTML = renderWelcome(false);
+    attachWelcomeEvents(false);
+  });			
+}			
+			
+function copyToClipboard(text, btn) {			
+  const showCopied = () => {			
+    const original = btn.textContent;			
+    btn.textContent = "Copied!";			
+    setTimeout(() => { btn.textContent = original; }, 1500);			
+  };			
+			
+  if (navigator.clipboard && navigator.clipboard.writeText) {			
+    navigator.clipboard.writeText(text).then(showCopied).catch(() => fallbackCopy(text, showCopied));			
+  } else {			
+    fallbackCopy(text, showCopied);			
+  }			
+}			
+			
+function fallbackCopy(text, callback) {			
+  const textarea = document.createElement("textarea");			
+  textarea.value = text;			
+  textarea.style.position = "fixed";			
+  textarea.style.left = "-9999px";			
+  document.body.appendChild(textarea);			
+  textarea.select();			
+  try {			
+    document.execCommand("copy");			
+    callback();			
+  } catch (e) { /* ignore */ }			
+  document.body.removeChild(textarea);			
+}			
+/* ================= RANDOM WELCOME SCREEN COLORS ================= */			
+// Generates a brand-new 5-color gradient (fully random HSL) every time			
+// the page loads, and auto-picks readable text colors based on the			
+// perceived brightness of that gradient. No fixed palette list is used.			
+(function applyRandomWelcomeColors() {			
+  function randomHslColor() {			
+    const h = Math.floor(Math.random() * 360);      // hue: 0-360			
+    const s = Math.floor(Math.random() * 101);       // saturation: 0-100%			
+    const l = Math.floor(Math.random() * 101);       // lightness: 0-100%			
+    return { h, s, l };			
+  }			
+			
+  // Convert HSL -> relative luminance (0 = darkest, 1 = lightest)			
+  // so we can decide whether text should be light or dark.			
+  function hslToLuminance(h, s, l) {			
+    const sNorm = s / 100;			
+    const lNorm = l / 100;			
+    const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;			
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));			
+    const m = lNorm - c / 2;			
+    let r, g, b;			
+    if (h < 60)       { r = c; g = x; b = 0; }			
+    else if (h < 120) { r = x; g = c; b = 0; }			
+    else if (h < 180) { r = 0; g = c; b = x; }			
+    else if (h < 240) { r = 0; g = x; b = c; }			
+    else if (h < 300) { r = x; g = 0; b = c; }			
+    else              { r = c; g = 0; b = x; }			
+    r += m; g += m; b += m;			
+    // Standard relative luminance formula			
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;			
+  }			
+			
+  const colorCount = 5;			
+  const colors = [];			
+  let totalLuminance = 0;			
+			
+  for (let i = 0; i < colorCount; i++) {			
+    const c = randomHslColor();			
+    colors.push(c);			
+    totalLuminance += hslToLuminance(c.h, c.s, c.l);			
+  }			
+  const avgLuminance = totalLuminance / colorCount;			
+			
+  // Build the gradient stops, evenly spaced (0%, 25%, 50%, 75%, 100%)			
+  const stops = colors.map((c, i) => {			
+    const pct = Math.round((i / (colorCount - 1)) * 100);			
+    return `hsl(${c.h}, ${c.s}%, ${c.l}%) ${pct}%`;			
+  }).join(", ");			
+			
+  const welcomeScreen = document.getElementById("welcomeScreen");			
+  if (welcomeScreen) {			
+    welcomeScreen.style.background = `linear-gradient(135deg, ${stops})`;			
+    welcomeScreen.style.backgroundSize = "300% 300%";			
+  }			
+			
+  // Pick readable text colors based on overall background brightness.			
+  // Bright background -> dark text. Dark background -> light text.			
+  const isLightBg = avgLuminance > 0.5;			
+  const textColor = isLightBg ? "#1a1a1a" : "#ffffff";			
+  const textShadow = isLightBg			
+    ? "3px 3px 0px rgba(255,255,255,0.35)"			
+    : "3px 3px 0px rgba(0,0,0,0.25)";			
+  // Accent color (used for the subject line) stays vivid but flips			
+  // between a deep tone (on light bg) and a bright tone (on dark bg).			
+  const accentColor = isLightBg ? "#7a3cff" : "#fff75e";			
+			
+  document.documentElement.style.setProperty("--wtext", textColor);			
+  document.documentElement.style.setProperty("--wtext-shadow", textShadow);			
+  document.documentElement.style.setProperty("--wtext-accent", accentColor);			
+})();			
+			
+/* ================= INIT ================= */
+(function init() {
+  const app = document.getElementById("app");
+  const saved = loadState();
+  const hasProgress = saved && saved.screen === "quiz" && !saved.submitted;
+  app.innerHTML = renderWelcome(hasProgress);
+  attachWelcomeEvents(hasProgress);
+})();			
+</script>			
+</body>			
+</html>
